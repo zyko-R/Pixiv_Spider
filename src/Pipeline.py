@@ -4,16 +4,32 @@ import aiofiles
 import os
 import aiofiles.os
 import imageio
-import urllib3
-import nest_asyncio
+from abc import ABC, abstractmethod
 from Main import *
 
-urllib3.disable_warnings()
-nest_asyncio.apply()
-class Pipeline:
-    @staticmethod
-    def process_gif(download_infos, file_name):
-        output(f'writing in:GIF {file_name}: ', form=1, code=31, end='')
+
+class WriteInMixin(ABC):
+    @abstractmethod
+    def write_in(self, download_infos, file_name):
+        pass
+
+
+class WriteInIMG(WriteInMixin):
+    def write_in(self, download_infos, file_name):
+        if not os.path.exists(f'./{file_name}'):
+            os.makedirs(f'./{file_name}')
+
+        async def write_in(params):
+            img_bina, suffix, _id, page = params[0]
+            async with aiofiles.open(f'./{file_name}/{_id}_p{page}.{suffix}', 'wb') as f:
+                await f.write(img_bina)
+            output('#', code=33, form=4, end='')
+
+        asy_launch(write_in, (download_infos,))
+
+
+class WriteInGIF(WriteInMixin):
+    def write_in(self, download_infos, file_name):
         if not os.path.exists(file_name):
             os.makedirs(file_name)
 
@@ -33,23 +49,19 @@ class Pipeline:
             output('#', code=33, form=4, end='')
 
         asy_launch(write_in, (download_infos,))
-        output(f'[finish]', form=4, code=32)
 
-    @staticmethod
-    def process_img(download_infos, file_name):
-        output(f'writing in:IMG {file_name}: ', form=1, code=31, end='')
-        if not os.path.exists(f'./{file_name}'):
-            os.makedirs(f'./{file_name}')
 
-        async def write_in(params):
-            img_bina, suffix, _id, page = params[0]
-            async with aiofiles.open(f'./{file_name}/{_id}_p{page}.{suffix}', 'wb') as f:
-                await f.write(img_bina)
-            output('#', code=33, form=4, end='')
+class WriteInCaller:
+    def __init__(self, download_infos, file_name, write_in_mixin):
+        if len(download_infos) > 0:
+            output(f'writing in:{file_name}: ', form=1, code=31, end='')
+            write_in_mixin.write_in(download_infos, file_name)
+            output(f'[finish]', form=4, code=32)
+        else:
+            pass
 
-        asy_launch(write_in, (download_infos,))
-        output(f'[finish]', form=4, code=32)
 
+class Pipeline:
     @staticmethod
     def zip(file_name):
         output(f'zipping {file_name}: ', form=1, code=31, end='')

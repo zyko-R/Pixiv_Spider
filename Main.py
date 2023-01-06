@@ -1,6 +1,8 @@
 import asyncio
-
-import Process
+import nest_asyncio
+import Builder
+from Parser import *
+nest_asyncio.apply()
 
 
 def output(message, code, form=0, end='\n'):
@@ -27,7 +29,10 @@ def asy_launch(asy_method, params_list, call_back=None):
 
 
 if __name__ == '__main__':
-    runner = Process.Run()
-    runner.start()
-    runner.run()
-    runner.end()
+    author_info = str(input('Author(ID/Name)>? '))
+    try:
+        source_limit = int(input("How many sources do you want>? "))
+    except ValueError:
+        output('Please enter correct parameter', code=31, form=1)
+        exit()
+    Builder.Crawler(author_info, except_method=ExceptAuthor_ID(), _source_limit=source_limit)

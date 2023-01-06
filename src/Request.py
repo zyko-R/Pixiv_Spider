@@ -1,20 +1,15 @@
 import aiohttp
-import urllib3
 from Main import *
 from aiohttp import ContentTypeError
-import nest_asyncio
-
-urllib3.disable_warnings()
-nest_asyncio.apply()
 
 
 class Request:
     headers = {
         'Referer': 'https://www.pixiv.net',
         'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)  '
-            'AppleWebKit/537.36 (KHTML, like Gecko)'
-            'Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.54 '
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.54'
     }
     resp_list = {}
 

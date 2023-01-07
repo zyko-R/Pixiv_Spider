@@ -1,3 +1,4 @@
+import json
 import shutil
 import zipfile
 import aiofiles
@@ -5,30 +6,34 @@ import os
 import aiofiles.os
 import imageio
 from abc import ABC, abstractmethod
-from Main import *
+from Main import output, asy_launch
 
 
-class WriteInMixin(ABC):
+class WriteMixin(ABC):
+    pass
+
+
+class CreWriteMixin(WriteMixin):
     @abstractmethod
     def write_in(self, download_infos, file_name):
         pass
 
 
-class WriteInIMG(WriteInMixin):
+class WriteIMG(CreWriteMixin):
     def write_in(self, download_infos, file_name):
         if not os.path.exists(f'./{file_name}'):
             os.makedirs(f'./{file_name}')
 
         async def write_in(params):
             img_bina, suffix, _id, page = params[0]
-            async with aiofiles.open(f'./{file_name}/{_id}_p{page}.{suffix}', 'wb') as f:
+            async with aiofiles.open(f'./{file_name}/{_id}_p{page}.{suffix}', 'wb+') as f:
                 await f.write(img_bina)
             output('#', code=33, form=4, end='')
 
         asy_launch(write_in, (download_infos,))
 
 
-class WriteInGIF(WriteInMixin):
+class WriteGIF(CreWriteMixin):
     def write_in(self, download_infos, file_name):
         if not os.path.exists(file_name):
             os.makedirs(file_name)
@@ -51,7 +56,7 @@ class WriteInGIF(WriteInMixin):
         asy_launch(write_in, (download_infos,))
 
 
-class WriteInCaller:
+class WriteCaller:
     def __init__(self, download_infos, file_name, write_in_mixin):
         if len(download_infos) > 0:
             output(f'writing in:{file_name}: ', form=1, code=31, end='')

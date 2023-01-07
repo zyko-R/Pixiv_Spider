@@ -1,46 +1,10 @@
 import re
 import json
-from lxml import etree
-from Main import *
-from abc import ABC, abstractmethod
 
 from Main import output
+from abc import ABC, abstractmethod
+from lxml import etree
 from Request import Request
-
-
-class ExceptMixin(ABC):
-    @staticmethod
-    def shrink(id_list, _source_limit):
-        _source_limit = len(id_list) if len(id_list) < _source_limit else _source_limit
-        id_list = id_list[:_source_limit]
-        return id_list
-
-    @abstractmethod
-    def except_id(self, param, _source_limit):
-        pass
-
-
-class ExceptAuthor_ID(ExceptMixin):
-    def except_id(self, param, _source_limit):
-        url = [f'https://www.pixiv.net/ajax/user/{param}/profile/all?lang=zh']
-        Request(url)
-        id_list = re.findall(r"\d+", str(Request.resp_list['json'][0]['body']['illusts']))
-        id_list = self.shrink(id_list, _source_limit)
-
-        output('except id: ', code=31, form=1, end='')
-        output(f'{_source_limit}', code=33, form=4, end='')
-        return id_list
-
-
-class ExceptCaller:
-    Result = []
-
-    @classmethod
-    def __init__(cls, param, _source_limit, except_mixin):
-        cls.Result = []
-        output('except ids: ', form=1, code=31, end='')
-        cls.Result = except_mixin.except_id(param, _source_limit)
-        output(f'[finish]', form=4, code=32)
 
 
 class MiddleMixin(ABC):
@@ -143,17 +107,17 @@ class PackageCaller:
 
 class Parser:
     @staticmethod
-    def except_author_info(author_info) -> ():
+    def except_author_info(_author_info) -> ():
         try:
-            if re.match("^[0-9]*$", author_info) is not None:
-                author_id = author_info
+            if re.match("^[0-9]*$", _author_info) is not None:
+                author_id = _author_info
                 url = [f'https://www.pixiv.net/users/{author_id}']
                 Request(url)
                 html = Request.resp_list['html'][0]
                 name_data = etree.HTML(html).xpath('//head/title/text()')[0]
                 author_name = re.findall('(.*?) - pixiv', name_data)[0]
             else:
-                author_name = author_info
+                author_name = _author_info
                 url = [f'https://www.pixiv.net/search_user.php?nick={author_name}&s_mode=s_usr']
                 Request(url)
                 html = Request.resp_list['html'][0]
@@ -163,5 +127,3 @@ class Parser:
         except IndexError:
             output('Please enter correct parameter', code=31, form=1)
             exit()
-
-

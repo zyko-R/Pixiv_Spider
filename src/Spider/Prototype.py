@@ -1,5 +1,6 @@
-from Parser import *
-from Pipeline import *
+from Main import output
+from IDProcess.Parser import *
+from IDProcess.Pipeline import *
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -29,7 +30,7 @@ class Login:
         login_info = {}
         if cls.login_info_correct:
             try:
-                with open('./res/id&password.json', 'r+') as f:
+                with open('../../res/id&password.json', 'r+') as f:
                     login_info = json.load(f)
             except Exception:
                 cls.login_info_correct = False
@@ -62,7 +63,7 @@ class Login:
     @classmethod
     def __reload_cookie(cls):
         try:
-            with open('./res/cookies.json', 'r+') as fr:
+            with open('./res/cookies.json', 'w+') as fr:
                 cookies_list = json.load(fr)
             cookie_list = [item["name"] + "=" + item["value"] for item in cookies_list]
             cookie_str = ';'.join(item for item in cookie_list)
@@ -78,33 +79,24 @@ class Login:
 
 
 class Crawler:
-    def __init__(self, _author_info,  except_method, _source_limit):
+    def __init__(self, id_list, _author_info):
         self.author_info = _author_info
-        self.source_number = _source_limit
-        self.except_mixin = except_method
-        self.source_limit = None
+        self.id_list = id_list
+        self.author_id = None
         self.r18_file_name = None
         self.nor_file_name = None
-        self.author_id = None
 
+    def work(self):
         self.start()
-        self.run()
+        self.middle()
         self.end()
 
     def start(self):
-        Login()
-
         author_name, self.author_id = Parser.except_author_info(self.author_info)
         if author_name.find(r'/') != -1:
             author_name = 'ERROR'
-
         self.r18_file_name = f'[R18]{author_name}'
         self.nor_file_name = f'[NOR]{author_name}'
-
-        if os.path.exists(f'./{self.r18_file_name}'):
-            shutil.rmtree(f'./{self.r18_file_name}')
-        if os.path.exists(f'./{self.nor_file_name}'):
-            shutil.rmtree(f'./{self.nor_file_name}')
 
     def end(self):
         if os.path.exists(f'./{self.r18_file_name}'):
@@ -114,14 +106,14 @@ class Crawler:
             Pipeline.zip(self.nor_file_name)
             shutil.rmtree(f'./{self.nor_file_name}')
 
-    def run(self):
-        id_list = ExceptCaller(self.author_id, self.source_number, self.except_mixin).Result
-        ids_nor, ids_r18 = MiddleCaller(id_list, MiddlePackage()).Result
+    def middle(self):
+        ids_nor, ids_r18 = MiddleCaller(self.id_list, MiddlePackage()).Result
         result = PackageCaller(ids_nor['img'], PackageIMG()).Result
-        WriteInCaller(result, self.nor_file_name, WriteInIMG())
+        WriteCaller(result, self.nor_file_name, WriteIMG())
         result = PackageCaller(ids_r18['img'], PackageIMG()).Result
-        WriteInCaller(result, self.r18_file_name, WriteInIMG())
+        WriteCaller(result, self.r18_file_name, WriteIMG())
         result = PackageCaller(ids_nor['gif'], PackageGIF()).Result
-        WriteInCaller(result, self.nor_file_name, WriteInGIF())
+        WriteCaller(result, self.nor_file_name, WriteGIF())
         result = PackageCaller(ids_r18['gif'], PackageGIF()).Result
-        WriteInCaller(result, self.r18_file_name, WriteInGIF())
+        WriteCaller(result, self.r18_file_name, WriteGIF())
+

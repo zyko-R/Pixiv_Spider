@@ -1,6 +1,7 @@
 import aiohttp
 from Main import *
 from aiohttp import ContentTypeError
+from aiohttp import TCPConnector
 
 
 class Request:
@@ -22,14 +23,12 @@ class Request:
         html_list, bina_list, json_list = [], [], []
 
         async def _except(_url):
-            async with aiohttp.ClientSession() as asy_spider:
+            async with aiohttp.ClientSession(connector=TCPConnector(ssl=False)) as asy_spider:
                 async with await asy_spider.get(url=_url[0], headers=cls.headers) as resp:
                     try:
                         html = await resp.text()
                         html_list.append(html)
-                    except ContentTypeError:
-                        pass
-                    except UnicodeDecodeError:
+                    except (ContentTypeError, UnicodeDecodeError):
                         pass
                     try:
                         bina = await resp.read()

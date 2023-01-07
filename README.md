@@ -38,7 +38,8 @@
 - 反复直到成功将cookie保存于文件 并移交给aiohttp.ClientSession()
 ### 获取画师名字
 - 通过aiohttp异步访问 `https://www.pixiv.net/users/{author_id}` 获取含画师名字的html文件
-- 使用xpath表达式 '//head/title/text()' + 正则表达式 '(.*?) - pixiv】得到画师名字 为文件命名
+- 使用xpath表达式 `//head/title/text()` + 正则表达式 `(.*?) - pixiv`
+- 得到画师名字 为文件命名
 ### 获取画师ID
 - 通过aiohttp异步访问`https://www.pixiv.net/search_user.php?nick={author_name}&s_mode=s_usr`
 - 使用xpath表达式`//h1/a[@target="_blank"][@class="title"]/@href`+ 正则表达式`\w+/(\d+)`得到画师id
@@ -54,6 +55,7 @@
 - 下载二进制文件，通过aiofiles异步保存图片
 ### 处理gif:
 - 访问`https://www.pixiv.net/ajax/illust/{_id}/ugoira_meta?lang=zh` 获取到含每帧间隔时间，含所有图片的zip地址的html文件
+- 通过代码`["body"]["originalSrc"]`访问json, 得到zip文件原地址
 - 下载并解压zip文件，保存进文件夹，使用imageio读取，拼接成gif文件保存
 ### 收尾
 - 使用zipfile压缩r18, normal文件夹

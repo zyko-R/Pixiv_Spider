@@ -29,11 +29,14 @@ def asy_launch(asy_method, params_list, call_back=None):
 
 if __name__ == '__main__':
     Login()
-    author_info = str(input('Author(ID/Name)>? '))
-    try:
-        source_limit = int(input("How many sources do you want>? "))
-    except ValueError:
-        output('Please enter correct parameter', code=31, form=1)
-        exit()
-    # AuthorSub.subscribe(str(input('Author(ID/Name)>? ')))
-    FocusedAuthorCrawler.process(author_info, source_limit)
+    Menu = """
+    If you want to subscribe a author(ID): type 1
+    If you want to download all artwork from one author: type 2
+    If you want to update your subscribe_list: type 3
+    """
+    match str(input(Menu)):
+        case '1': ExceptAuthorSub.subscribe(str(input('Enter author(ID)')))
+        case '2': FocusedAuthorCrawler(str(input('Author(ID/Name)>? ')), int(input("How many sources do you want>? ")))
+        case '3': IncrementalAuthorCrawler(int(input("How many sources do you want to update>? ")))
+
+

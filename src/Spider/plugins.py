@@ -2,10 +2,10 @@ import json
 from abc import ABC, abstractmethod
 import re
 from Main import output
-from Request import Request
+from IDProcess.Request import Request
 
 
-class ExceptMixin(ABC):
+class FocusedMixin(ABC):
     @staticmethod
     def shrink(id_list, _source_limit):
         _source_limit = len(id_list) if len(id_list) < _source_limit else _source_limit
@@ -17,7 +17,7 @@ class ExceptMixin(ABC):
         pass
 
 
-class ExceptAuthor_ID(ExceptMixin):
+class ExceptAuthorID(FocusedMixin):
     def except_id(self, param, _source_limit):
         url = [f'https://www.pixiv.net/ajax/user/{param}/profile/all?lang=zh']
         Request(url)
@@ -28,7 +28,7 @@ class ExceptAuthor_ID(ExceptMixin):
         return {'author id': param, 'id_list': id_list}
 
 
-class ExceptCaller:
+class FocusedExceptCaller:
     Result = []
 
     @classmethod
@@ -39,13 +39,13 @@ class ExceptCaller:
         output(f'[finish]', form=4, code=32)
 
 
-class Increment(ABC):
+class IncrementMixin(ABC):
     @abstractmethod
     def except_id(self, _source_limit):
         pass
 
 
-class AuthorSub(Increment):
+class ExceptAuthorSub(IncrementMixin):
     @staticmethod
     def subscribe(author_id):
         _list = {'subscribe': []}
@@ -55,37 +55,47 @@ class AuthorSub(Increment):
         except (TypeError, json.decoder.JSONDecodeError):
             pass
         finally:
-            new_id = ExceptCaller(author_id, 1, ExceptAuthor_ID()).Result['id_list'][0]
+            new_id = FocusedExceptCaller(author_id, 1, ExceptAuthorID()).Result['id_list'][0]
             _list['subscribe'].append({'author_id': author_id, 'artwork_id': new_id})
             with open('./res/subscribe.json', 'w+') as f:
                 f.write(json.dumps(_list))
 
     def except_id(self, _source_limit):
-        id_author_list = []
+        update_list = []
         with open('./res/subscribe.json', 'r+') as f:
             _list = json.load(f)
-        # sub_list = [{'author id':sub['author id'],'artwork id':sub['artwork id']}for sub in _list['subscribe_list']]
-        sub_list = _list['subscribe']
-        pending_list = []
-        for sub in sub_list:
-            new_ids = ExceptCaller(sub['author_id'], _source_limit, ExceptAuthor_ID()).Result['id_list']
-            pending_list.append({'author_id': sub['author_id'], 'old_id': sub['artwork_id'], 'new_ids': new_ids})
-
+        pending_list = [{
+                'author_id': sub['author_id'], 'old_id': sub['artwork_id'],
+                'new_ids': FocusedExceptCaller(sub['author_id'], _source_limit, ExceptAuthorID()).Result['id_list']
+             } for sub in _list['subscribe']
+        ]
         for pending in pending_list:
             id_list = []
             for new_id in pending['new_ids']:
                 if new_id == pending['old_id']:
                     break
-                else:
-                    id_list.append(new_id)
+                id_list.append(new_id)
             if len(id_list) != 0:
-                for sub in _list['subscribe']:
-                    if sub['author_id'] == pending['author_id']:
-                        sub['artwork_id'] = pending['new_ids'][0]
-                        break
-                id_author_list.append({'author_id': pending['author_id'], 'id_list': id_list})
-
+                update_list.append({'author_id': pending['author_id'], 'id_list': id_list})
+        for update in update_list:
+            for sub in _list['subscribe']:
+                if sub['author_id'] == update['author_id']:
+                    sub['artwork_id'] = update['id_list'][0]
+                    break
         with open('./res/subscribe.json', 'w+') as f:
             f.write(json.dumps(_list))
+        return update_list
 
-        return id_author_list
+
+class IncrementExceptCaller:
+    Result = []
+
+    @classmethod
+    def __init__(cls, _source_limit, except_mixin):
+        cls.Result = []
+        output(f'except: ', form=1, code=31, end='')
+        cls.Result = except_mixin.except_id(_source_limit)
+        output(f'[finish]', form=4, code=32)
+
+
+

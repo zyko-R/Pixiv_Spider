@@ -1,4 +1,3 @@
-import json
 import shutil
 import zipfile
 import aiofiles

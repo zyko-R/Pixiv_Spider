@@ -16,7 +16,6 @@ class Crawler:
         self.end()
 
     def start(self):
-
         self.r18_file_name = f'[R18]{self.file_name}'
         self.nor_file_name = f'[NOR]{self.file_name}'
 

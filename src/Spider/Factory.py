@@ -1,3 +1,4 @@
+from Process.Request import Request
 from Spider.Prototype import *
 from Spider.plugins import *
 
@@ -25,15 +26,52 @@ class FocusedAuthorCrawler(CrawlerMixin):
         self.clone_crawler()(id_list, author_name).work()
 
 
-class IncrementalAuthorCrawler(CrawlerMixin):
+class AuthorTraceCrawler(CrawlerMixin):
     def __init__(self, _source_limit):
         author_id_list = IncrementExceptCaller(_source_limit, ExceptAuthorSub()).Result
         for author_id in author_id_list:
             author_name, author_id = self.get_info(author_id)
             self.clone_crawler()(author_id['id_list'], author_name).work()
 
+    @staticmethod
+    def subscribe():
+        def auto_subscribe(user_id):
+            url = [f'https://www.pixiv.net/ajax/user/{user_id}'
+                   f'/following?offset=0&limit=100&rest=show&tag=&acceptingRequests=0&lang=zh']
+            user_list = Request(url).resp_list['json'][0]
+            for user in user_list['body']['users']:
+                write_in(user['userId'])
 
-class IncrementalRankingCrawler(CrawlerMixin):
+        def write_in(author_id):
+            sub_list = {'subscribe': []}
+            try:
+                with open('./res/subscribe.json', 'r+') as f:
+                    sub_list = json.load(f)
+            except (TypeError, json.decoder.JSONDecodeError):
+                pass
+            for sub in sub_list['subscribe']:
+                if sub['author_id'] == author_id:
+                    return
+            else:
+                new_id = FocusedExceptCaller(author_id, 1, ExceptAuthorID()).Result['id_list'][0]
+                sub_list['subscribe'].append({'author_id': author_id, 'artwork_id': new_id})
+            with open('./res/subscribe.json', 'w') as f:
+                f.write(json.dumps(sub_list))
+
+        match str(input('Auto synchronize -type 1, Manual -type 2')):
+            case '1':
+                auto_subscribe(str(input("Enter Your Pixiv Id>? ")))
+            case '2':
+                write_in(str(input('Enter Author(ID/Name)>?')))
+
+
+class SubArtworkCrawler(CrawlerMixin):
+    def __init__(self, _source_limit):
+        id_list = IncrementExceptCaller(_source_limit, ExceptAuthorSub()).Result
+        self.clone_crawler()(id_list, 'SubArtwork').work()
+
+
+class RankingCrawler(CrawlerMixin):
     def __init__(self, _source_limit):
         id_list = IncrementExceptCaller(_source_limit, ExceptRanking()).Result
         self.clone_crawler()(id_list, 'Ranking').work()

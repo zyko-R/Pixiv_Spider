@@ -34,17 +34,19 @@ def test():
 if __name__ == '__main__':
     Login()
     Menu = """
-    If you want to subscribe a author: type 1
-    If you want to update your subscribe_list: type 2
-    If you want to download artwork from one author: type 3
-    If you want to download ranking artwork: type 4
+    If you want to trace author(s): type 1
+    If you want to update the artworks of author(s) you trace: type 2
+    If you want to download artworks from one author: type 3
+    If you want to download artworks from author you subscribe: type 4
+    If you want to download ranking artwork: type 5
     """
     print(Menu)
     match str(input('>? ')):
-        case '1': ExceptAuthorSub.subscribe(str(input('Enter Author(ID/Name)>?')))
-        case '2': IncrementalAuthorCrawler(int(input("How many sources do you want to update>? ")))
+        case '1': AuthorTraceCrawler.subscribe()
+        case '2': AuthorTraceCrawler(20)
         case '3': FocusedAuthorCrawler(str(input('Author(ID/Name)>? ')), int(input("How many sources do you want>? ")))
-        case '4': IncrementalRankingCrawler(int(input("How many sources do you want>? ")))
+        case '4': SubArtworkCrawler(int(input("How many sources do you want>? ")))
+        case '5': RankingCrawler(int(input("How many sources do you want>? ")))
 
 
 

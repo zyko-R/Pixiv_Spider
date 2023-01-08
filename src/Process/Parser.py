@@ -103,6 +103,7 @@ class MiddlePackage(MiddleMixin):
                 output('#', code=33, form=4, end='')
             except(IndexError, AttributeError):
                 pass
+        output('[finish]', form=0, code=32)
         log = f"""
         [NOR]: [IMG]{len(ids_nor['img'])}, [GIF]{len(ids_nor['gif'])}
         [R18]: [IMG]{len(ids_r18['img'])}, [GIF]{len(ids_r18['gif'])}"""

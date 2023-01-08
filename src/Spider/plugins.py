@@ -40,30 +40,18 @@ class FocusedExceptCaller:
 
 
 class IncrementMixin(ABC):
+    @staticmethod
+    def shrink(id_list, _source_limit):
+        _source_limit = len(id_list) if len(id_list) < _source_limit else _source_limit
+        id_list = id_list[:_source_limit]
+        return id_list
+
     @abstractmethod
     def except_id(self, _source_limit):
         pass
 
 
-class ExceptAuthorSub(IncrementMixin):
-    @staticmethod
-    def subscribe(author_id):
-        sub_list = {'subscribe': []}
-        try:
-            with open('./res/subscribe.json', 'r+') as f:
-                sub_list = json.load(f)
-
-        except (TypeError, json.decoder.JSONDecodeError):
-            pass
-        for sub in sub_list['subscribe']:
-            if sub['author_id'] == author_id:
-                exit('you have already followed him/her')
-        else:
-            new_id = FocusedExceptCaller(author_id, 1, ExceptAuthorID()).Result['id_list'][0]
-            sub_list['subscribe'].append({'author_id': author_id, 'artwork_id': new_id})
-        with open('./res/subscribe.json', 'w') as f:
-            f.write(json.dumps(sub_list))
-
+class ExceptAuthorTrace(IncrementMixin):
     def except_id(self, _source_limit):
         update_list = []
         with open('./res/subscribe.json', 'r+') as f:
@@ -93,14 +81,30 @@ class ExceptAuthorSub(IncrementMixin):
 
 class ExceptRanking(IncrementMixin):
     def except_id(self, _source_limit):
-        url = ['https://www.pixiv.net/ranking.php?mode=daily']
-        match str(input('if you want r18s, please type 1>? ')):
-            case '1': url[0] += '_r18'
-        html = Request(url).resp_list['html'][0]
-        id_list = re.findall('"data-type=".*?"data-id="(.*?)"', html)
-        for i in range(1, int(len(id_list)/2)):
-            id_list.pop(i)
-        id_list = id_list[:_source_limit]
+        def parser(html):
+            _id_list = re.findall('"data-type=".*?"data-id="(.*?)"', html)
+            for i in range(1, int(len(_id_list) / 2)):
+                _id_list.pop(i)
+            _id_list = self.shrink(_id_list, _source_limit)
+            return _id_list
+
+        url = ['https://www.pixiv.net/ranking.php?mode=daily', 'https://www.pixiv.net/ranking.php?mode=daily_r18']
+        nor_id_list = parser(Request(url).resp_list['html'][0])
+        r18_id_list = parser(Request(url).resp_list['html'][1])
+        id_list = nor_id_list + r18_id_list
+        output(f'{len(id_list)}', code=33, form=4, end='')
+        return id_list
+
+
+class ExceptAuthorSub(IncrementMixin):
+    def except_id(self, _source_limit):
+        id_list = []
+        page = 0
+        while len(id_list) < _source_limit:
+            page += 1
+            url = [f'https://www.pixiv.net/ajax/follow_latest/illust?p={page}&mode=all&lang=zh']
+            id_list += Request(url).resp_list['json'][0]['body']['page']['ids']
+        id_list = self.shrink(id_list, _source_limit)
         output(f'{len(id_list)}', code=33, form=4, end='')
         return id_list
 

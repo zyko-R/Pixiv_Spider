@@ -27,16 +27,24 @@ def asy_launch(asy_method, params_list, call_back=None):
         pass
 
 
+def test():
+    IncrementExceptCaller(10, ExceptRanking())
+
+
 if __name__ == '__main__':
     Login()
     Menu = """
-    If you want to subscribe a author(ID): type 1
-    If you want to download all artwork from one author: type 2
-    If you want to update your subscribe_list: type 3
+    If you want to subscribe a author: type 1
+    If you want to update your subscribe_list: type 2
+    If you want to download artwork from one author: type 3
+    If you want to download ranking artwork: type 4
     """
-    match str(input(Menu)):
-        case '1': ExceptAuthorSub.subscribe(str(input('Enter author(ID)')))
-        case '2': FocusedAuthorCrawler(str(input('Author(ID/Name)>? ')), int(input("How many sources do you want>? ")))
-        case '3': IncrementalAuthorCrawler(int(input("How many sources do you want to update>? ")))
+    print(Menu)
+    match str(input('>? ')):
+        case '1': ExceptAuthorSub.subscribe(str(input('Enter Author(ID/Name)>?')))
+        case '2': IncrementalAuthorCrawler(int(input("How many sources do you want to update>? ")))
+        case '3': FocusedAuthorCrawler(str(input('Author(ID/Name)>? ')), int(input("How many sources do you want>? ")))
+        case '4': IncrementalRankingCrawler(int(input("How many sources do you want>? ")))
+
 
 

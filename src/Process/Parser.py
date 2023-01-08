@@ -7,7 +7,7 @@ from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.service import Service
-from IDProcess.Request import Request
+from Process.Request import Request
 from selenium.webdriver.edge.options import Options
 
 
@@ -58,14 +58,14 @@ class Login:
         password.send_keys(login_password)
         login = bro.find_element(By.XPATH, '//button[@type="submit"]')
         login.click()
-        sleep(3)
-        with open('./res/cookies.json', 'w') as f:
+        sleep(5)
+        with open('./res/cookies.json', 'w+') as f:
             f.write(json.dumps(bro.get_cookies()))
 
     @classmethod
     def __reload_cookie(cls):
         try:
-            with open('./res/cookies.json', 'w+') as fr:
+            with open('./res/cookies.json', 'r+') as fr:
                 cookies_list = json.load(fr)
             cookie_list = [item["name"] + "=" + item["value"] for item in cookies_list]
             cookie_str = ';'.join(item for item in cookie_list)
@@ -87,25 +87,26 @@ class MiddleMixin(ABC):
 class MiddlePackage(MiddleMixin):
     def process_id(self, id_list):
 
-        ids_normal = {'img': [], 'gif': []}
+        ids_nor = {'img': [], 'gif': []}
         ids_r18 = {'img': [], 'gif': []}
         url_list = [f'https://www.pixiv.net/artworks/{_id}' for _id in id_list]
-        Request(url_list)
-
         for group in range(len(Request.resp_list['html'])):
-            html, _id = Request.resp_list['html'][group], id_list[group]
+            html, _id = Request(url_list).resp_list['html'][group], id_list[group]
             try:
                 gif_tag = etree.HTML(html).xpath('//head/title/text()')[0]
                 r18_tag = etree.HTML(html).xpath('//head/meta[@property="twitter:title"]/@content')[0]
                 if r18_tag.find('R-18') != -1:
                     ids_r18['gif' if gif_tag.find('动图') != -1 else 'img'].append(_id)
                 else:
-                    ids_normal['gif' if gif_tag.find('动图') != -1 else 'img'].append(_id)
+                    ids_nor['gif' if gif_tag.find('动图') != -1 else 'img'].append(_id)
                 output('#', code=33, form=4, end='')
-            except IndexError:
+            except(IndexError, AttributeError):
                 pass
-
-        return ids_normal, ids_r18
+        log = f"""
+        [NOR]: [IMG]{len(ids_nor['img'])}, [GIF]{len(ids_nor['gif'])}
+        [R18]: [IMG]{len(ids_r18['img'])}, [GIF]{len(ids_r18['gif'])}"""
+        output(log, form=0, code=32)
+        return ids_nor, ids_r18
 
 
 class MiddleCaller:
@@ -115,7 +116,6 @@ class MiddleCaller:
         if len(id_list) > 0:
             output('process ids: ', form=1, code=31, end='')
             cls.Result = middle_mixin.process_id(id_list)
-            output(f'[finish]', form=4, code=32)
 
 
 class PackageMixin(ABC):

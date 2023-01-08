@@ -61,6 +61,7 @@
 #### 根据"关注画师最新作品"获取艺术作品ID
 - 通过aiohttp异步访问`https://www.pixiv.net/ajax/follow_latest/illust?p={page}&mode=all&lang=z` 获取到含全部艺术作品ID的json文件 
 - 通过代码`id_list += [0]['body']['page']['ids']`获取到全部艺术作品ID
+### 艺术作品ID处理:
 #### 分类
 - 通过aiohttp异步访问`https://www.pixiv.net/artworks/{artwork_id}` 获取到含艺术作品tag`gif, r18`的html文件 
 - 使用xpath表达式`//head/title/text()`+`//head/meta[@property="twitter:title"]/@content`得到tag，进行ID分类

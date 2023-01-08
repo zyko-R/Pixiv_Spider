@@ -90,8 +90,9 @@ class MiddlePackage(MiddleMixin):
         ids_nor = {'img': [], 'gif': []}
         ids_r18 = {'img': [], 'gif': []}
         url_list = [f'https://www.pixiv.net/artworks/{_id}' for _id in id_list]
+        Request(url_list)
         for group in range(len(Request.resp_list['html'])):
-            html, _id = Request(url_list).resp_list['html'][group], id_list[group]
+            html, _id = Request.resp_list['html'][group], id_list[group]
             try:
                 gif_tag = etree.HTML(html).xpath('//head/title/text()')[0]
                 r18_tag = etree.HTML(html).xpath('//head/meta[@property="twitter:title"]/@content')[0]

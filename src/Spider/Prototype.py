@@ -3,21 +3,14 @@ from Process.Pipeline import *
 
 
 class Crawler:
-    def __init__(self, id_list, file_name):
-        self.file_name = file_name
-        self.id_list = id_list
-        self.author_id = None
-        self.r18_file_name = None
-        self.nor_file_name = None
+    def __init__(self, plugin_package):
+        file_name, self.id_list = plugin_package.run()
+        self.r18_file_name = f'[R18]{file_name}'
+        self.nor_file_name = f'[NOR]{file_name}'
 
     def work(self):
-        self.start()
         self.middle()
         self.end()
-
-    def start(self):
-        self.r18_file_name = f'[R18]{self.file_name}'
-        self.nor_file_name = f'[NOR]{self.file_name}'
 
     def end(self):
         if os.path.exists(f'./{self.r18_file_name}'):

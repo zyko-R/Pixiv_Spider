@@ -92,3 +92,4 @@ class Zip:
             Zip.Name_list = z.namelist()
             for item in os.listdir(self.unzip_path):
                 z.write(self.unzip_path + os.sep + item)
+

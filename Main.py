@@ -1,6 +1,7 @@
 import asyncio
 import nest_asyncio
 from Spider.Factory import *
+from Process.Pipeline import *
 nest_asyncio.apply()
 
 
@@ -45,7 +46,7 @@ class FuncBuilder:
 
 def init():
     Login()
-    FuncBuilder('To trace author(s)', AuthorTraceCrawler.subscribe)
+    FuncBuilder('To trace author(s)', subscribe)
     FuncBuilder('To update the artworks of author(s) you trace', AuthorTraceCrawler)
     FuncBuilder('To download artworks from one author', FocusedAuthorCrawler)
     FuncBuilder('To download artworks from author(s) you subscribe', SubArtworkCrawler)

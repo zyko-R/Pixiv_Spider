@@ -104,10 +104,8 @@ class MiddlePackage(MiddleMixin):
             except(IndexError, AttributeError):
                 pass
         output('[finish]', form=0, code=32)
-        log = f"""
-        [NOR]: [IMG]{len(ids_nor['img'])}, [GIF]{len(ids_nor['gif'])}
-        [R18]: [IMG]{len(ids_r18['img'])}, [GIF]{len(ids_r18['gif'])}"""
-        output(log, form=0, code=32)
+        output(f'[NOR]: [IMG]{len(ids_nor["img"])}, [GIF]{len(ids_nor["gif"])}', form=0, code=32)
+        output(f'[R18]: [IMG]{len(ids_r18["img"])}, [GIF]{len(ids_r18["gif"])}', form=0, code=32)
         return ids_nor, ids_r18
 
 
@@ -127,40 +125,53 @@ class PackageMixin(ABC):
 
 
 class PackageIMG(PackageMixin):
-    def package(self, _id_list):
-        download_infos = []
-        _url_list = [f'https://www.pixiv.net/ajax/illust/{_id}/pages?lang=zh' for _id in _id_list]
-        Request(_url_list)
+    def package(self, id_list):
+        def yield_url(_url_list):
+            resp_list = Request(_url_list).resp_list['json']
+            for group, _url_list in enumerate(resp_list):
+                _page_url_list = re.findall(r'https://i\.pximg\.net/img-original/img/.*?_p\d+\..{3}', str(_url_list))
+                yield _page_url_list, id_list[group]
 
-        json_list = Request.resp_list['json']
-        for group in range(len(json_list)):
-            page_urls = re.findall(r'https://i\.pximg\.net/img-original/img/.*?_p\d+\..{3}', str(json_list[group]))
-            Request(page_urls)
-            img_bina = Request.resp_list['bina']
-            for page in range(len(img_bina)):
-                img_data, suffix, _id, page = img_bina[page], page_urls[page][-3:], _id_list[group], page
+        def yield_data(_page_url_list):
+            resp_list = Request(_page_url_list).resp_list['bina']
+            for _page, _img_data in enumerate(resp_list):
+                _suffix = _page_url_list[_page][-3:]
+                yield _img_data, _suffix, _page
+
+        url_list = [f'https://www.pixiv.net/ajax/illust/{_id}/pages?lang=zh' for _id in id_list]
+        download_infos = []
+        for page_url_list, _id in yield_url(url_list):
+            for img_data, suffix, page in yield_data(page_url_list):
                 download_infos.append((img_data, suffix, _id, page))
                 output('#', code=33, form=4, end='')
-
         return download_infos
 
 
 class PackageGIF(PackageMixin):
     def package(self, _id_list):
-        download_infos = []
+        def yield_url(_url_list):
+            url_data_list = Request(_url_list).resp_list['html']
+            for group, url_data in enumerate(url_data_list):
+                try:
+                    url_data = json.loads(url_data)
+                    _zip_url = url_data["body"]["originalSrc"]
+                    _delay = [item["delay"] for item in url_data["body"]["frames"]]
+                    _delay = sum(_delay) / len(_delay) / 1000
+                    _id = _id_list[group]
+                    yield [_zip_url], _delay, _id
+                except TypeError:
+                    pass
+
+        def yield_info(_zip_url):
+            _gif_bina = Request(_zip_url).resp_list['bina'][0]
+            yield _gif_bina
+
         _url_list = [f'https://www.pixiv.net/ajax/illust/{_id}/ugoira_meta?lang=zh' for _id in _id_list]
-        Request(_url_list)
-
-        url_data_list = Request.resp_list['html']
-        for group in range(len(url_data_list)):
-            url_data = json.loads(url_data_list[group])
-            zip_url = url_data["body"]["originalSrc"]
-            Request([zip_url])
-            delay = [item["delay"] for item in url_data["body"]["frames"]]
-            gif_bina, _id, delay = Request.resp_list['bina'][0], _id_list[group], sum(delay) / len(delay) / 1000
-            download_infos.append((gif_bina, _id, delay))
-            output('#', code=33, form=4, end='')
-
+        download_infos = []
+        for zip_url, delay, _id in yield_url(_url_list):
+            for gif_bina in yield_info(zip_url):
+                download_infos.append((gif_bina, _id, delay))
+                output('#', code=33, form=4, end='')
         return download_infos
 
 

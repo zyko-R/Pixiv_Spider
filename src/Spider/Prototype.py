@@ -21,10 +21,10 @@ class Crawler:
 
     def end(self):
         if os.path.exists(f'./{self.r18_file_name}'):
-            Pipeline.zip(self.r18_file_name)
+            Zip(self.r18_file_name, Zip.zip)
             shutil.rmtree(f'./{self.r18_file_name}')
         if os.path.exists(f'./{self.nor_file_name}'):
-            Pipeline.zip(self.nor_file_name)
+            Zip(self.nor_file_name, Zip.zip)
             shutil.rmtree(f'./{self.nor_file_name}')
 
     def middle(self):

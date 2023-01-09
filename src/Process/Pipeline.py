@@ -44,9 +44,8 @@ class WriteGIF(CreWriteMixin):
             async with aiofiles.open(zip_path, "wb+") as fp:
                 await fp.write(gif_bina)
             await aiofiles.os.mkdir(img_path)
-            with zipfile.ZipFile(zip_path, "r") as unzip:
-                unzip.extractall(img_path)
-            flames = [imageio.v3.imread(f'{img_path}/{img}') for img in unzip.namelist()]
+            Zip(img_path, Zip.unzip)
+            flames = [imageio.v3.imread(f'{img_path}/{img}') for img in Zip.Name_list]
             imageio.v2.mimsave(f'{img_path}.gif', flames, "GIF", duration=delay)
             shutil.rmtree(img_path)
             os.unlink(f'{zip_path}')
@@ -65,14 +64,31 @@ class WriteCaller:
             pass
 
 
-class Pipeline:
-    @staticmethod
-    def zip(file_name):
-        output(f'zipping {file_name}: ', form=1, code=31, end='')
-        zip_file = f'./{file_name}.zip'
-        z = zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED)
-        for item in os.listdir(f'./{file_name}'):
-            z.write(f'./{file_name}' + os.sep + item)
-            output('#', code=33, form=4, end='')
-        z.close()
-        output(f'[finish]', form=4, code=32)
+class Zip:
+    zip = 0
+    unzip = 1
+    Name_list = []
+
+    def __init__(self, file_name, form):
+        self.form = form
+        self.zip_path = f'./{file_name}.zip'
+        self.unzip_path = f'./{file_name}'
+        self.run()
+
+    def run(self):
+        if self.form == Zip.zip:
+            self._zip()
+        else:
+            if self.form == Zip.unzip:
+                self._unzip()
+
+    def _unzip(self):
+        with zipfile.ZipFile(self.zip_path, "r") as unzip:
+            unzip.extractall(self.unzip_path)
+            Zip.Name_list = unzip.namelist()
+
+    def _zip(self):
+        with zipfile.ZipFile(self.zip_path, 'w', zipfile.ZIP_DEFLATED) as z:
+            Zip.Name_list = z.namelist()
+            for item in os.listdir(self.unzip_path):
+                z.write(self.unzip_path + os.sep + item)

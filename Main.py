@@ -27,26 +27,46 @@ def asy_launch(asy_method, params_list, call_back=None):
         pass
 
 
-def test():
-    IncrementExceptCaller(10, ExceptRanking())
+Func_list = []
+
+
+class FuncBuilder:
+    def __init__(self, display, func):
+        self.display = display
+        self.func = func
+        Func_list.append(self)
+
+    def __str__(self):
+        return self.display
+
+    def func(self):
+        self.func()
+
+
+def init():
+    Login()
+    FuncBuilder('To trace author(s)', AuthorTraceCrawler.subscribe)
+    FuncBuilder('To update the artworks of author(s) you trace', AuthorTraceCrawler)
+    FuncBuilder('To download artworks from one author', FocusedAuthorCrawler)
+    FuncBuilder('To download artworks from author(s) you subscribe', SubArtworkCrawler)
+    FuncBuilder('If you want to download ranking artworks', RankingCrawler)
+
+
+def menu():
+    while True:
+        for num, func in enumerate(Func_list):
+            print(f'{num+1}: {func}')
+            match str(input(f'>>Yes-1 : >>Next-2 : >Exit-3 >? ')):
+                case '1': func.func()
+                case '2': continue
+                case '3': exit("Exit")
+            break
 
 
 if __name__ == '__main__':
-    Login()
-    Menu = """
-    If you want to trace author(s): type 1
-    If you want to update the artworks of author(s) you trace: type 2
-    If you want to download artworks from one author: type 3
-    If you want to download artworks from author you subscribe: type 4
-    If you want to download ranking artwork: type 5
-    """
-    print(Menu)
-    match str(input('>? ')):
-        case '1': AuthorTraceCrawler.subscribe()
-        case '2': AuthorTraceCrawler(20)
-        case '3': FocusedAuthorCrawler(str(input('Author(ID/Name)>? ')), int(input("How many sources do you want>? ")))
-        case '4': SubArtworkCrawler(int(input("How many sources do you want>? ")))
-        case '5': RankingCrawler(int(input("How many sources do you want>? ")))
+    init()
+    menu()
+
 
 
 

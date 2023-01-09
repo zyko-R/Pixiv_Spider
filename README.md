@@ -40,7 +40,7 @@
 ### 准备工作:
 #### 模拟登陆  
 - 使用Selenium模块打开浏览器 访问`https://accounts.pixiv.net/login?return_to=https://www.pixiv.net`
-- 通过xpath表达式 `//*[@class="sc-bn9ph6-1 hJBrSP"]/input[@autocomplete="username` 找到输入账号的位置并输入
+- 通过xpath表达式 `//*[@class="sc-bn9ph6-1 hJBrSP"]/input[@autocomplete="username"]` 找到输入账号的位置并输入
 - 通过xpath表达式 `//*[@class="sc-bn9ph6-1 hJBrSP"]/input[@autocomplete="current-password"]` 找到输入密码的位置并输入
 - 通过xpath表达式 `//button[@type="submit"]`找到登陆按钮并点击
 - 反复直到成功将cookie保存于文件 并移交给aiohttp.ClientSession()
@@ -86,3 +86,4 @@
 - 2023-1-8 迁移了Login类和Request文件, 添加了菜单 + 小小的优化
 - 2023-1-8 修复订阅系统的bug，添加了下载每日排行榜(normal+r18)的功能
 - 2023-1-8 添加了本地追踪名单同步pixiv关注名单+下载关注画师们最新艺术的功能
+- 2023-1-9 将大部分解析方法更替成生成器 提升可读性 重写了菜单

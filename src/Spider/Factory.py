@@ -20,18 +20,21 @@ class CrawlerMixin(ABC):
 
 
 class FocusedAuthorCrawler(CrawlerMixin):
-    def __init__(self, param, _source_limit):
-        author_name, author_id = self.get_info(param)
-        id_list = FocusedExceptCaller(param, _source_limit, ExceptAuthorID()).Result['id_list']
+    def __init__(self):
+        author_info = str(input('Author(ID/Name)>? '))
+        source_limit = int(input("How many sources do you want>? "))
+        author_name, author_id = self.get_info(author_info)
+        id_list = FocusedExceptCaller(author_id, source_limit, ExceptAuthorID()).Result['id_list']
         self.clone_crawler()(id_list, author_name).work()
 
 
 class AuthorTraceCrawler(CrawlerMixin):
-    def __init__(self, _source_limit):
-        author_id_list = IncrementExceptCaller(_source_limit, ExceptAuthorSub()).Result
-        for author_id in author_id_list:
-            author_name, author_id = self.get_info(author_id)
-            self.clone_crawler()(author_id['id_list'], author_name).work()
+    def __init__(self):
+        source_limit = int(input("How many sources do you want>? "))
+        author_id_list = IncrementExceptCaller(source_limit, ExceptAuthorTrace()).Result
+        for info in author_id_list:
+            author_name, author_id = self.get_info(info['author_id'])
+            self.clone_crawler()(info['id_list'], author_name).work()
 
     @staticmethod
     def subscribe():
@@ -50,15 +53,14 @@ class AuthorTraceCrawler(CrawlerMixin):
             except (TypeError, json.decoder.JSONDecodeError):
                 pass
             for sub in sub_list['subscribe']:
-                if sub['author_id'] == author_id:
+                if author_id == sub['author_id']:
                     return
-            else:
-                new_id = FocusedExceptCaller(author_id, 1, ExceptAuthorID()).Result['id_list'][0]
-                sub_list['subscribe'].append({'author_id': author_id, 'artwork_id': new_id})
+            new_id = FocusedExceptCaller(author_id, 1, ExceptAuthorID()).Result['id_list'][0]
+            sub_list['subscribe'].append({'author_id': author_id, 'artwork_id': new_id})
             with open('./res/subscribe.json', 'w') as f:
                 f.write(json.dumps(sub_list))
 
-        match str(input('Auto synchronize -type 1, Manual -type 2')):
+        match str(input('Auto synchronize -type 1, Manual -type 2 >? ')):
             case '1':
                 auto_subscribe(str(input("Enter Your Pixiv Id>? ")))
             case '2':
@@ -66,12 +68,14 @@ class AuthorTraceCrawler(CrawlerMixin):
 
 
 class SubArtworkCrawler(CrawlerMixin):
-    def __init__(self, _source_limit):
-        id_list = IncrementExceptCaller(_source_limit, ExceptAuthorSub()).Result
+    def __init__(self):
+        source_limit = int(input("How many sources do you want>? "))
+        id_list = IncrementExceptCaller(source_limit, ExceptAuthorSub()).Result
         self.clone_crawler()(id_list, 'SubArtwork').work()
 
 
 class RankingCrawler(CrawlerMixin):
-    def __init__(self, _source_limit):
-        id_list = IncrementExceptCaller(_source_limit, ExceptRanking()).Result
+    def __init__(self, ):
+        source_limit = int(input("How many sources do you want>? "))
+        id_list = IncrementExceptCaller(source_limit, ExceptRanking()).Result
         self.clone_crawler()(id_list, 'Ranking').work()

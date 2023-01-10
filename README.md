@@ -27,7 +27,7 @@
 *存放了获取到artwork_id后的通用处理组件* 
 - Parser组件活动于网络 负责解析网络请求和发起网络请求
 - Pipline组件活动于本地 负责处理最终数据
-### src / Spider
+- ### src / Spider
 *存放了原型爬虫与特殊爬虫*
 - Prototype将ProcessID封装成一个通用(原型)爬虫
 - SpecialType将原型爬虫与插件组合成特殊行为的爬虫

@@ -3,7 +3,7 @@ from Process.Parser import *
 from Process.Request import Request
 
 
-class ParametricMixin(ABC):
+class ArtworkIDMixin(ABC):
     @staticmethod
     def shrink(id_list, _source_limit):
         _source_limit = len(id_list) if len(id_list) < _source_limit else _source_limit
@@ -25,7 +25,7 @@ class ParametricMixin(ABC):
         return author_name, author_id
 
 
-class NonparametricMixin(ABC):
+class AutoArtworkIDMixin(ABC):
     @staticmethod
     def shrink(id_list, _source_limit):
         _source_limit = len(id_list) if len(id_list) < _source_limit else _source_limit
@@ -37,7 +37,7 @@ class NonparametricMixin(ABC):
         pass
 
 
-class ExceptAuthorID(ParametricMixin):
+class ByAuthorID(ArtworkIDMixin):
     def except_id(self, param, _source_limit):
         author_name, author_id = self.get_info(param)
         url = [f'https://www.pixiv.net/ajax/user/{author_id}/profile/all?lang=zh']
@@ -47,6 +47,17 @@ class ExceptAuthorID(ParametricMixin):
 
         output(f'{_source_limit}', code=33, form=4, end='')
         return author_name, id_list
+
+
+class ByArtworkID(ArtworkIDMixin):
+    def except_id(self, param, _source_limit):
+        url = [f'https://www.pixiv.net/ajax/illust/{param}/recommend/init?limit={_source_limit}&lang=zh']
+        artwork_list = Request(url).resp_list['json'][0]['body']['illusts']
+        id_list = []
+        for artwork in artwork_list:
+            if 'id' in artwork:
+                id_list.append(artwork['id'])
+        return param, id_list
 
 
 def subscribe():
@@ -67,7 +78,7 @@ def subscribe():
         for sub in sub_list['subscribe']:
             if author_id == sub['author_id']:
                 return
-        name, new_id = ParametricPackage(ExceptAuthorID).run()
+        name, new_id = PluginPackage(ByAuthorID).run()
         sub_list['subscribe'].append({'author_id': author_id, 'artwork_id': new_id})
         with open('./res/subscribe.json', 'w') as f:
             f.write(json.dumps(sub_list))
@@ -79,7 +90,7 @@ def subscribe():
             write_in(str(input('Enter Author(ID/Name)>?')))
 
 
-class ExceptAuthorTrace(NonparametricMixin):
+class ByTrace(AutoArtworkIDMixin):
     def except_id(self, _source_limit):
 
         id_list = []
@@ -87,7 +98,7 @@ class ExceptAuthorTrace(NonparametricMixin):
             _list = json.load(f)
         trace_list = [{
                 'author_id': sub['author_id'], 'old_id': sub['artwork_id'],
-                'new_ids': ExceptAuthorID().except_id(sub['author_id'], _source_limit)['id_list']
+                'new_ids': ByAuthorID().except_id(sub['author_id'], _source_limit)[1]
              } for sub in _list['subscribe']
         ]
 
@@ -117,7 +128,7 @@ class ExceptAuthorTrace(NonparametricMixin):
         return 'Update', id_list
 
 
-class ExceptRanking(NonparametricMixin):
+class ByRanking(AutoArtworkIDMixin):
     def except_id(self, _source_limit):
         def yield_id_list(ranking_url_list):
             html_list = Request(ranking_url_list).resp_list['html']
@@ -137,7 +148,7 @@ class ExceptRanking(NonparametricMixin):
         return 'Ranking', id_list
 
 
-class ExceptAuthorSub(NonparametricMixin):
+class BySub(AutoArtworkIDMixin):
     def except_id(self, _source_limit):
         def yield_id_list(_page_limit):
             for page in range(_page_limit):
@@ -152,7 +163,7 @@ class ExceptAuthorSub(NonparametricMixin):
         return 'Sub', id_list
 
 
-class ParametricPackage:
+class PluginPackage:
     def __init__(self, plugin):
         self.plugin = plugin
 
@@ -165,12 +176,12 @@ class ParametricPackage:
         return file_name,  id_list
 
 
-class NonparametricPackage:
+class AutoPluginPackage:
     def __init__(self, plugin):
         self.plugin = plugin
 
     def run(self):
-        source_limit = int(input("How many sources do you want>? "))
+        source_limit = 50
         output(f'except ids: ', form=1, code=31, end='')
         file_name,  id_list = self.plugin.except_id(source_limit)
         output(f'[finish]', form=4, code=32)

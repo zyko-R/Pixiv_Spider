@@ -8,25 +8,31 @@ class CrawlerMixin(ABC):
         return Crawler
 
 
-class FocusedAuthorCrawler(CrawlerMixin):
+class ByAuthorIDCrawler(CrawlerMixin):
     def __init__(self):
-        plugin = ParametricPackage(ExceptAuthorID())
+        plugin = PluginPackage(ByAuthorID())
         self.clone_crawler()(plugin).work()
 
 
-class AuthorTraceCrawler(CrawlerMixin):
+class ByArtworkIDCrawler(CrawlerMixin):
     def __init__(self):
-        plugin = NonparametricPackage(ExceptAuthorTrace())
+        plugin = PluginPackage(ByArtworkID())
         self.clone_crawler()(plugin).work()
 
 
-class SubArtworkCrawler(CrawlerMixin):
+class ByTraceCrawler(CrawlerMixin):
     def __init__(self):
-        plugin = NonparametricPackage(ExceptAuthorSub())
+        plugin = AutoPluginPackage(ByTrace())
         self.clone_crawler()(plugin).work()
 
 
-class RankingCrawler(CrawlerMixin):
+class BySubCrawler(CrawlerMixin):
     def __init__(self):
-        plugin = NonparametricPackage(ExceptRanking())
+        plugin = AutoPluginPackage(BySub())
+        self.clone_crawler()(plugin).work()
+
+
+class ByRankingCrawler(CrawlerMixin):
+    def __init__(self):
+        plugin = AutoPluginPackage(ByRanking())
         self.clone_crawler()(plugin).work()

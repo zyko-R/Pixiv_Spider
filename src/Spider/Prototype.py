@@ -9,7 +9,7 @@ class Crawler:
         self.nor_file_name = f'[NOR]{file_name}'
 
     def work(self):
-        self.middle()
+        self.run()
         self.end()
 
     def end(self):
@@ -20,7 +20,7 @@ class Crawler:
             Zip(self.nor_file_name, Zip.zip)
             shutil.rmtree(f'./{self.nor_file_name}')
 
-    def middle(self):
+    def run(self):
         ids_nor, ids_r18 = MiddleCaller(self.id_list, MiddlePackage()).Result
         result = PackageCaller(ids_nor['img'], PackageIMG()).Result
         WriteCaller(result, self.nor_file_name, WriteIMG())

@@ -1,7 +1,6 @@
 import asyncio
 import nest_asyncio
 from Spider.Factory import *
-from Process.Pipeline import *
 nest_asyncio.apply()
 
 
@@ -47,17 +46,18 @@ class FuncBuilder:
 def init():
     Login()
     FuncBuilder('To trace author(s)', subscribe)
-    FuncBuilder('To update the artworks of author(s) you trace', AuthorTraceCrawler)
-    FuncBuilder('To download artworks from one author', FocusedAuthorCrawler)
-    FuncBuilder('To download artworks from author(s) you subscribe', SubArtworkCrawler)
-    FuncBuilder('If you want to download ranking artworks', RankingCrawler)
+    FuncBuilder('To update the artworks of author(s) you trace', ByTraceCrawler)
+    FuncBuilder('To download similar artworks from artwork', ByArtworkIDCrawler)
+    FuncBuilder('To download artworks from one author', ByAuthorIDCrawler)
+    FuncBuilder('To download artworks from author(s) you subscribe', BySubCrawler)
+    FuncBuilder('If you want to download ranking artworks', ByRankingCrawler)
 
 
 def menu():
     while True:
         for num, func in enumerate(Func_list):
             print(f'{num+1}: {func}')
-            match str(input(f'>>Yes-1 : >>Next-2 : >Exit-3 >? ')):
+            match str(input(f'>>Yes-1 | >>Next-2 | >Exit-3 >? ')):
                 case '1': func.func()
                 case '2': continue
                 case '3': exit("Exit")

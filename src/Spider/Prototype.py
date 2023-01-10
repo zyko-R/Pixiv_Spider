@@ -1,14 +1,12 @@
-from Process.Parser import *
-from Process.Pipeline import *
+from ProcessID.Parser import *
+from ProcessID.Pipeline import *
 
 
-class Crawler:
+class Prototype:
     def __init__(self, plugin_package):
         file_name, self.id_list = plugin_package.run()
         self.r18_file_name = f'[R18]{file_name}'
         self.nor_file_name = f'[NOR]{file_name}'
-
-    def work(self):
         self.run()
         self.end()
 
@@ -30,4 +28,3 @@ class Crawler:
         WriteCaller(result, self.nor_file_name, WriteGIF())
         result = PackageCaller(ids_r18['gif'], PackageGIF()).Result
         WriteCaller(result, self.r18_file_name, WriteGIF())
-

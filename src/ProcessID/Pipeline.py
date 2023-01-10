@@ -24,9 +24,9 @@ class WriteIMG(CreWriteMixin):
             os.makedirs(f'./{file_name}')
 
         async def write_in(params):
-            img_bina, suffix, _id, page = params[0]
-            async with aiofiles.open(f'./{file_name}/{_id}_p{page}.{suffix}', 'wb+') as f:
-                await f.write(img_bina)
+            img_data, img_name = params[0]
+            async with aiofiles.open(f'./{file_name}/{img_name}', 'wb+') as f:
+                await f.write(img_data)
             output('#', code=33, form=4, end='')
 
         asy_launch(write_in, (download_infos,))
@@ -38,9 +38,9 @@ class WriteGIF(CreWriteMixin):
             os.makedirs(file_name)
 
         async def write_in(params):
-            gif_bina, _id, delay = params[0]
-            img_path = f'./{file_name}/{_id}'
-            zip_path = f'./{file_name}/{_id}.zip'
+            gif_bina, delay, gif_name,  = params[0]
+            img_path = f'./{file_name}/{gif_name}'
+            zip_path = f'./{file_name}/{gif_name}.zip'
             async with aiofiles.open(zip_path, "wb+") as fp:
                 await fp.write(gif_bina)
             await aiofiles.os.mkdir(img_path)

@@ -1,6 +1,8 @@
 import asyncio
 import nest_asyncio
-from Spider.Factory import *
+
+from ExceptID.Secondary import subscribe
+from Spider.SpecialType import *
 nest_asyncio.apply()
 
 
@@ -39,9 +41,6 @@ class FuncBuilder:
     def __str__(self):
         return self.display
 
-    def func(self):
-        self.func()
-
 
 def init():
     Login()
@@ -50,7 +49,7 @@ def init():
     FuncBuilder('To download similar artworks from artwork', ByArtworkIDCrawler)
     FuncBuilder('To download artworks from one author', ByAuthorIDCrawler)
     FuncBuilder('To download artworks from author(s) you subscribe', BySubCrawler)
-    FuncBuilder('If you want to download ranking artworks', ByRankingCrawler)
+    FuncBuilder('To download ranking artworks', ByRankingCrawler)
 
 
 def menu():
@@ -61,6 +60,7 @@ def menu():
                 case '1': func.func()
                 case '2': continue
                 case '3': exit("Exit")
+            print('DONE')
             break
 
 

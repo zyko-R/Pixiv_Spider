@@ -2,7 +2,7 @@
 ## 功能
 - ### 聚焦
 根据画师信息, 将该作者的艺术作品集下载到本地  
-根据画作信息，将相似艺术作品集下载到本地
+根据画作信息，将相似艺术作品集下载到本地  
 将每日排行榜上的艺术作品下载到本地  
 将关注画师们的艺术作品集下载到本地
   
@@ -19,15 +19,20 @@
 ![image.png](https://s2.loli.net/2023/01/07/k3KtSz1pENdDsBh.png)
   - 其余根据终端提示操作即可, 运行完毕后目录下会自动生成艺术作品集的zip文件
 ## 目录与文件说明
-- ### src / IDProcess
+- ### src / Spider
+*存放了原型爬虫与特殊爬虫*
+- Prototype将ProcessID封装成一个通用爬虫
+- SpecialType将原型与插件组合成特殊行为的爬虫
+- ### src / ExceptID
+*存放了各种获取artwork_id的组件*
+- Primary制定了各种获取artwork_id的方法与接口(原型爬虫的插件)
+- Secondary制定了插件的附件(与爬取ID无关)
+- ### src / ProcessID
 *存放了获取到artwork_id后的通用处理组件* 
 - Parser组件活动于网络 负责解析网络请求和发起网络请求
 - Pipline组件活动于本地 负责处理最终数据
-- ### src / Spider
-*存放了自定义爬虫的各种组件*
-- Plugins(插件)制定了各种获取ID的方法
-- Prototype(原型)将IDProcess封装成一个通用爬虫
-- Factory(工厂)将原型与插件组合成特殊行为的爬虫
+- ### Src / Request
+*一切网络的请求与响应都在这里发生*
 ## To-do List:
 - [x] ***特定画师全画作下载***
 - [x] ***模拟登陆***
@@ -63,14 +68,14 @@
 - 通过正则表达式`\d+`获取到全部艺术作品ID
 #### 根据特定画作ID获取相似艺术作品ID
 - 通过aiohttp异步访问`https://www.pixiv.net/ajax/illust/{param}/recommend/init?limit={_source_limit}&lang=zh`  获取到含全部艺术作品ID的json文件 
-- 通过代码`['json'][0]['body']['illusts']`锁定艺术作品列表
-- 通过代码`['id']`遍历艺术作品列表, 获取到全部艺术作品ID
+- 通过代码`['body']['illusts']`获取到全部相似艺术作品信息
+- 遍历`['id']`获取到全部艺术作品ID
 #### 根据每日排行榜获取艺术作品ID
 - 通过aiohttp异步访问`https://www.pixiv.net/ranking.php?mode=daily(_18)` 获取到含画作ID的html文件
 - 通过正则表达式`"data-type=".*?"data-id="(.*?)"`获取到全部艺术作品ID
 #### 根据"关注画师最新作品"获取艺术作品ID
 - 通过aiohttp异步访问`https://www.pixiv.net/ajax/follow_latest/illust?p={page}&mode=all&lang=z` 获取到含全部艺术作品ID的json文件 
-- 通过代码`id_list += [0]['body']['page']['ids']`获取到全部艺术作品ID
+- 通过代码`id_list += ['body']['page']['ids']`获取到全部艺术作品ID
 ***
 ### 艺术作品ID的处理:
 #### 分类
@@ -93,3 +98,4 @@
 - 2023-1-9 将大部分解析方法更替成生成器 提升可读性 重写了菜单
 - 2023-1-10 重写了插件 原型 组合之间的关系 结构性更强
 - 2023-1-10 添加了下载相似艺术作品的功能
+- 2023-1-11 统一了ArtworkID(plugin)的接口 使实现更加直观 更改了目录结构

@@ -7,7 +7,7 @@ from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.service import Service
-from Process.Request import Request
+from Request import Request
 from selenium.webdriver.edge.options import Options
 
 
@@ -86,7 +86,6 @@ class MiddleMixin(ABC):
 
 class MiddlePackage(MiddleMixin):
     def process_id(self, id_list):
-
         ids_nor = {'img': [], 'gif': []}
         ids_r18 = {'img': [], 'gif': []}
         url_list = [f'https://www.pixiv.net/artworks/{_id}' for _id in id_list]
@@ -142,7 +141,7 @@ class PackageIMG(PackageMixin):
         download_infos = []
         for page_url_list, _id in yield_url(url_list):
             for img_data, suffix, page in yield_data(page_url_list):
-                download_infos.append((img_data, suffix, _id, page))
+                download_infos.append((img_data, f'{_id}_p{page}.{suffix}'))
                 output('#', code=33, form=4, end='')
         return download_infos
 
@@ -170,7 +169,7 @@ class PackageGIF(PackageMixin):
         download_infos = []
         for zip_url, delay, _id in yield_url(_url_list):
             for gif_bina in yield_info(zip_url):
-                download_infos.append((gif_bina, _id, delay))
+                download_infos.append((gif_bina, delay, _id))
                 output('#', code=33, form=4, end='')
         return download_infos
 
@@ -224,5 +223,4 @@ class SecondINFOCaller:
 
     @classmethod
     def __init__(cls, param, second_info_mixin):
-        cls.Result = []
         cls.Result = second_info_mixin.except_(param)

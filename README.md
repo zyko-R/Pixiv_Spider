@@ -2,7 +2,7 @@
 ## 功能
 - ### 聚焦
 根据画师信息, 将该作者的艺术作品集下载到本地  
-根据画作信息，将相似艺术作品集下载到本地  
+根据画作信息, 将相似艺术作品集下载到本地  
 将每日排行榜上的艺术作品下载到本地  
 将关注画师们的艺术作品集下载到本地
   
@@ -19,18 +19,18 @@
 ![image.png](https://s2.loli.net/2023/01/07/k3KtSz1pENdDsBh.png)
   - 其余根据终端提示操作即可, 运行完毕后目录下会自动生成艺术作品集的zip文件
 ## 目录与文件说明
-- ### src / Spider
-*存放了原型爬虫与特殊爬虫*
-- Prototype将ProcessID封装成一个通用爬虫
-- SpecialType将原型与插件组合成特殊行为的爬虫
 - ### src / ExceptID
 *存放了各种获取artwork_id的组件*
-- Primary制定了各种获取artwork_id的方法与接口(原型爬虫的插件)
-- Secondary制定了插件的附件(与爬取ID无关)
+- Primary制定了各种获取artwork_id的组件(原型爬虫的插件)
+- Secondary制定了插件中与爬取ID无关的附件
 - ### src / ProcessID
 *存放了获取到artwork_id后的通用处理组件* 
 - Parser组件活动于网络 负责解析网络请求和发起网络请求
 - Pipline组件活动于本地 负责处理最终数据
+### src / Spider
+*存放了原型爬虫与特殊爬虫*
+- Prototype将ProcessID封装成一个通用(原型)爬虫
+- SpecialType将原型爬虫与插件组合成特殊行为的爬虫
 - ### Src / Request
 *一切网络的请求与响应都在这里发生*
 ## To-do List:

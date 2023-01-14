@@ -13,34 +13,39 @@ class WriteMixin(ABC):
 
 
 class CreWriteMixin(WriteMixin):
+    def __init__(self, file_name, download_infos):
+        self.download_infos = download_infos
+        self.file_name = file_name
+        if not os.path.exists(f'./{file_name}'):
+            os.makedirs(f'./{file_name}')
+
+        if len(download_infos) > 0:
+            output(f'writing in:{self.file_name}: ', form=1, code=31, end='')
+            self.write_in()
+            output(f'[finish]', form=4, code=32)
+
     @abstractmethod
-    def write_in(self, download_infos, file_name):
+    def write_in(self):
         pass
 
 
 class WriteIMG(CreWriteMixin):
-    def write_in(self, download_infos, file_name):
-        if not os.path.exists(f'./{file_name}'):
-            os.makedirs(f'./{file_name}')
-
+    def write_in(self):
         async def write_in(params):
             img_data, img_name = params[0]
-            async with aiofiles.open(f'./{file_name}/{img_name}', 'wb+') as f:
+            async with aiofiles.open(f'./{self.file_name}/{img_name}', 'wb+') as f:
                 await f.write(img_data)
             output('#', code=33, form=4, end='')
 
-        asy_launch(write_in, (download_infos,))
+        asy_launch(write_in, (self.download_infos,))
 
 
 class WriteGIF(CreWriteMixin):
-    def write_in(self, download_infos, file_name):
-        if not os.path.exists(file_name):
-            os.makedirs(file_name)
-
+    def write_in(self):
         async def write_in(params):
             gif_bina, delay, gif_name,  = params[0]
-            img_path = f'./{file_name}/{gif_name}'
-            zip_path = f'./{file_name}/{gif_name}.zip'
+            img_path = f'./{self.file_name}/{gif_name}'
+            zip_path = f'./{self.file_name}/{gif_name}.zip'
             async with aiofiles.open(zip_path, "wb+") as fp:
                 await fp.write(gif_bina)
             await aiofiles.os.mkdir(img_path)
@@ -51,17 +56,7 @@ class WriteGIF(CreWriteMixin):
             os.unlink(f'{zip_path}')
             output('#', code=33, form=4, end='')
 
-        asy_launch(write_in, (download_infos,))
-
-
-class WriteCaller:
-    def __init__(self, download_infos, file_name, write_in_mixin):
-        if len(download_infos) > 0:
-            output(f'writing in:{file_name}: ', form=1, code=31, end='')
-            write_in_mixin.write_in(download_infos, file_name)
-            output(f'[finish]', form=4, code=32)
-        else:
-            pass
+        asy_launch(write_in, (self.download_infos,))
 
 
 class Zip:
@@ -76,11 +71,9 @@ class Zip:
         self.run()
 
     def run(self):
-        if self.form == Zip.zip:
-            self._zip()
-        else:
-            if self.form == Zip.unzip:
-                self._unzip()
+        match self.form:
+            case self.zip: self._zip()
+            case self.unzip: self._unzip()
 
     def _unzip(self):
         with zipfile.ZipFile(self.zip_path, "r") as unzip:

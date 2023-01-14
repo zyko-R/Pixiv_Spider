@@ -1,13 +1,14 @@
-from ExceptID.Secondary import get_info
+from abc import ABC, abstractmethod
+import re
 from Main import output
-from ProcessID.Parser import *
+from Except.Secondary import *
 from Request import Request
 
 
 class ArtworkIDMixin(ABC):
     @abstractmethod
-    def __init__(self):
-        pass
+    def __init__(self, source_limit):
+        self.source_limit = source_limit
 
     @abstractmethod
     def except_id(self):
@@ -43,9 +44,6 @@ class ByArtworkID(ArtworkIDMixin):
 
 
 class ByTrace(ArtworkIDMixin):
-    def __init__(self, source_limit):
-        self.source_limit = source_limit
-
     def except_id(self):
         def artwork_except(artwork_id, source_limit):
             url = [
@@ -91,7 +89,7 @@ class ByTrace(ArtworkIDMixin):
 
 class ByRanking(ArtworkIDMixin):
     def __init__(self, source_limit):
-        self.source_limit = source_limit
+        self.source_limit = source_limit/2
 
     def except_id(self):
         def yield_id_list(ranking_url_list):

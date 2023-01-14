@@ -1,5 +1,5 @@
 from Spider.Prototype import *
-from ExceptID.Primary import *
+from Except.Primary import *
 
 
 class CrawlerMixin:

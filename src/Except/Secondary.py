@@ -1,4 +1,7 @@
-from ExceptID.Primary import *
+import json
+from lxml import etree
+from Except.Primary import *
+from Request import Request
 
 
 def subscribe():
@@ -29,6 +32,46 @@ def subscribe():
             auto_subscribe(str(input("Enter Your Pixiv Id>? ")))
         case '2':
             write_in(str(input('Enter Author(ID/Name)>?')))
+
+
+class SecondINFOMixin(ABC):
+    @abstractmethod
+    def except_(self, param):
+        pass
+
+
+class SecondINFOAuthorName(SecondINFOMixin):
+    def except_(self, param):
+        try:
+            url = [f'https://www.pixiv.net/users/{param}']
+            Request(url)
+            html = Request.resp_list['html'][0]
+            name_data = etree.HTML(html).xpath('//head/title/text()')[0]
+            return re.findall('(.*?) - pixiv', name_data)[0]
+        except IndexError:
+            output('Please enter correct parameter', code=31, form=1)
+            exit()
+
+
+class SecondINFOAuthorID(SecondINFOMixin):
+    def except_(self, param):
+        try:
+            url = [f'https://www.pixiv.net/search_user.php?nick={param}&s_mode=s_usr']
+            Request(url)
+            html = Request.resp_list['html'][0]
+            id_data = etree.HTML(html).xpath('//h1/a[@target="_blank"][@class="title"]/@href')[0]
+            return re.findall(r'\w+/(\d+)', id_data)[0]
+        except IndexError:
+            output('Please enter correct parameter', code=31, form=1)
+            exit()
+
+
+class SecondINFOCaller:
+    Result = []
+
+    @classmethod
+    def __init__(cls, param, second_info_mixin):
+        cls.Result = second_info_mixin.except_(param)
 
 
 def get_info(author_info):

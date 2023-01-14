@@ -1,4 +1,5 @@
 import json
+from abc import ABC
 from lxml import etree
 from Except.Primary import *
 from Request import Request
@@ -15,7 +16,15 @@ def subscribe():
         for sub in sub_list['subscribe']:
             if author_id == sub['author_id']:
                 return
-        name, new_id = PluginPackage(ByAuthorID).run()
+
+        def expect_id():
+            author_name, _ = get_info(author_id)
+            url = [f'https://www.pixiv.net/ajax/user/{author_id}/profile/all?lang=zh']
+            id_data = Request(url).resp_list['json'][0]['body']['illusts']
+            id_list = re.findall(r"\d+", str(id_data))
+            return author_name, id_list[0]
+
+        name, new_id = expect_id()
         sub_list['subscribe'].append({'author_id': author_id, 'artwork_id': new_id})
         with open('./res/subscribe.json', 'w') as f:
             f.write(json.dumps(sub_list))
@@ -35,6 +44,11 @@ def subscribe():
 
 
 class SecondINFOMixin(ABC):
+    Result = []
+
+    def __init__(self, param):
+        self.Result = self.except_(param)
+
     @abstractmethod
     def except_(self, param):
         pass
@@ -49,7 +63,7 @@ class SecondINFOAuthorName(SecondINFOMixin):
             name_data = etree.HTML(html).xpath('//head/title/text()')[0]
             return re.findall('(.*?) - pixiv', name_data)[0]
         except IndexError:
-            output('Please enter correct parameter', code=31, form=1)
+            output('Please enter correct AuthorID', code=31, form=1)
             exit()
 
 
@@ -62,23 +76,15 @@ class SecondINFOAuthorID(SecondINFOMixin):
             id_data = etree.HTML(html).xpath('//h1/a[@target="_blank"][@class="title"]/@href')[0]
             return re.findall(r'\w+/(\d+)', id_data)[0]
         except IndexError:
-            output('Please enter correct parameter', code=31, form=1)
+            output('Please enter correct AuthorName', code=31, form=1)
             exit()
-
-
-class SecondINFOCaller:
-    Result = []
-
-    @classmethod
-    def __init__(cls, param, second_info_mixin):
-        cls.Result = second_info_mixin.except_(param)
 
 
 def get_info(author_info):
     if re.match("^[0-9]*$", author_info) is not None:
-        author_name = SecondINFOCaller(author_info, SecondINFOAuthorName()).Result
+        author_name = SecondINFOAuthorName(author_info).Result
         author_id = author_info
     else:
-        author_id = SecondINFOCaller(author_info, SecondINFOAuthorID()).Result
+        author_id = SecondINFOAuthorID(author_info).Result
         author_name = author_info
     return author_name, author_id

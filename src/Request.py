@@ -22,9 +22,9 @@ class Request:
     def download(cls, url_list):
         html_list, bina_list, json_list = [], [], []
 
-        async def _except(_url):
+        async def _except(_url, *args):
             async with aiohttp.ClientSession(connector=TCPConnector(ssl=False)) as asy_spider:
-                async with await asy_spider.get(url=_url[0], headers=cls.headers) as resp:
+                async with await asy_spider.get(url=_url, headers=cls.headers) as resp:
                     try:
                         html = await resp.text()
                         html_list.append(html)

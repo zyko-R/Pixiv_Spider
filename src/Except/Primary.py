@@ -43,7 +43,7 @@ class ByArtworkID(ArtworkIDMixin):
         return self.artwork_id, id_list
 
 
-class ByTrace(ArtworkIDMixin):
+class ByTrace(ArtworkIDMixin, ABC):
     def except_id(self):
         def artwork_except(artwork_id, source_limit):
             url = [

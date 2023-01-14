@@ -1,5 +1,4 @@
 from Spider.SpecialType import *
-
 import asyncio
 import nest_asyncio
 nest_asyncio.apply()
@@ -58,7 +57,7 @@ def asy_launch(asy_method, params_list, call_back=None):
     task_list = []
     loop = asyncio.get_event_loop()
     for params in p_list:
-        task = loop.create_task(asy_method(tuple(params)))
+        task = loop.create_task(asy_method(*tuple(params)))
         if call_back is not None:
             task.add_done_callback(call_back)
         task_list.append(task)

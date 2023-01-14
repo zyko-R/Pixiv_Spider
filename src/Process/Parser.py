@@ -79,9 +79,8 @@ class Login:
 
 
 class MiddleMixin(ABC):
-    Result = []
-
     def __init__(self, id_list):
+        self.Result = []
         self.id_list = id_list
         if len(self.id_list) > 0:
             output('process ids: ', form=1, code=31, end='')
@@ -118,9 +117,8 @@ class MiddlePackage(MiddleMixin):
 
 
 class PackageMixin(ABC):
-    Result = []
-
     def __init__(self, id_list):
+        self.Result = []
         self.id_list = id_list
         if len(self.id_list) > 0:
             output(f'expect source: ', form=1, code=31, end='')
@@ -147,12 +145,13 @@ class PackageIMG(PackageMixin):
                 yield _img_data, _suffix, _page
 
         url_list = [f'https://www.pixiv.net/ajax/illust/{_id}/pages?lang=zh' for _id in self.id_list]
-        download_infos = []
+        img_bina_list, name_list = [], []
         for source_url_list, _id in yield_url(url_list):
             for img_data, suffix, page in yield_data(source_url_list):
-                download_infos.append((img_data, f'{_id}_p{page}.{suffix}'))
+                img_bina_list.append(img_data)
+                name_list.append(f'{_id}_p{page}.{suffix}')
                 output('#', code=33, form=4, end='')
-        return download_infos
+        return img_bina_list, name_list
 
 
 class PackageGIF(PackageMixin):
@@ -171,9 +170,12 @@ class PackageGIF(PackageMixin):
                     pass
 
         _url_list = [f'https://www.pixiv.net/ajax/illust/{_id}/ugoira_meta?lang=zh' for _id in self.id_list]
-        download_infos = []
+        gif_bina_list, delay_list, name_list = [], [], []
+
         for zip_url, delay, _id in yield_url(_url_list):
+            delay_list.append(delay)
+            name_list.append(_id)
             gif_bina = Request(zip_url).resp_list['bina'][0]
-            download_infos.append((gif_bina, delay, _id))
+            gif_bina_list.append(gif_bina)
             output('#', code=33, form=4, end='')
-        return download_infos
+        return gif_bina_list, delay_list, name_list

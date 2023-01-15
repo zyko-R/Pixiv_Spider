@@ -19,20 +19,18 @@
 ![image.png](https://s2.loli.net/2023/01/07/k3KtSz1pENdDsBh.png)
   - 其余根据终端提示操作即可, 运行完毕后目录下会自动生成艺术作品集的zip文件
 ## 目录与文件说明
-- ### src / ExceptID
-*存放了各种获取artwork_id的组件*
-- Primary制定了各种获取artwork_id的组件(原型爬虫的插件)
-- Secondary制定了插件中与爬取ID无关的附件
-- ### src / ProcessID
+- ### src / Process
 *存放了获取到artwork_id后的通用处理组件* 
-- Parser组件活动于网络 负责解析网络请求和发起网络请求
-- Pipline组件活动于本地 负责处理最终数据
+- Interface提供外部接口
+- Component.Parser组件活动于网络 负责解析网络请求和发起网络请求
+- Component.Pipline组件活动于本地 负责处理最终数据
 - ### src / Spider
-*存放了原型爬虫与特殊爬虫*
-- Prototype将ProcessID封装成一个通用(原型)爬虫
-- SpecialType将原型爬虫与插件组合成特殊行为的爬虫
-- ### Src / Request
-*一切网络的请求与响应都在这里发生*
+*存放了各种行为方式的爬虫*
+- SpecialType提供外部接口
+- Component.ExpectID 存放各种获取artwork_id的装饰器
+- Component.Prototype 存放了被装饰的通用爬虫
+- ### Src / Downloader
+*一切网络请求与响应都在这里准备与发生*
 ## To-do List:
 - [x] ***特定画师全画作下载***
 - [x] ***模拟登陆***
@@ -101,3 +99,6 @@
 - 2023-1-11 统一了ArtworkIDMixin的接口 使实现更加直观 更改了目录结构
 - 2023-1-14 开多线程 速度更快
 - 2023-1-14 开更多的多线程
+- 2023-1-15 大幅度重构了项目
+   - 统一Process策略模式为外观模式(嵌套职责链模式)
+   - 统一插件与原型为装饰器模式-适配器模式

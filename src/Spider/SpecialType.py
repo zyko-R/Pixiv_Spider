@@ -1,36 +1,32 @@
-from Spider.Prototype import *
-from Except.Primary import *
+from Spider.Component.Prototype import Prototype
+from Spider.Component.ExpectID import *
 
 
-class CrawlerMixin:
-    pass
-
-
-class ByAuthorIDCrawler(CrawlerMixin):
+class ByAuthorIDCrawler:
     def __init__(self):
-        plugin = PluginPackage(ByAuthorID)
-        Prototype(plugin)
+        crawler = Prototype()
+        ByAuthorID(crawler).crawl()
 
 
-class ByArtworkIDCrawler(CrawlerMixin):
+class ByArtworkIDCrawler:
     def __init__(self):
-        plugin = PluginPackage(ByArtworkID)
-        Prototype(plugin)
+        crawler = Prototype()
+        ByArtworkID(crawler).crawl()
 
 
-class ByTraceCrawler(CrawlerMixin):
+class ByTraceCrawler:
     def __init__(self):
-        plugin = PluginPackage(ByTrace)
-        Prototype(plugin)
+        crawler = Prototype()
+        ByTrace(crawler).crawl()
 
 
-class BySubCrawler(CrawlerMixin):
+class BySubCrawler:
     def __init__(self):
-        plugin = PluginPackage(BySub)
-        Prototype(plugin)
+        crawler = Prototype()
+        BySub(crawler).crawl()
 
 
-class ByRankingCrawler(CrawlerMixin):
+class ByRankingCrawler:
     def __init__(self):
-        plugin = PluginPackage(ByRanking)
-        Prototype(plugin)
+        crawler = Prototype()
+        ByRanking(crawler).crawl()

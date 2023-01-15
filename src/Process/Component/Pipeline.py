@@ -1,3 +1,4 @@
+import asyncio
 import shutil
 import zipfile
 import aiofiles
@@ -5,24 +6,19 @@ import os
 import aiofiles.os
 import imageio
 from abc import ABC, abstractmethod
-from Main import output, asy_launch
 from concurrent.futures import ThreadPoolExecutor, ALL_COMPLETED, as_completed, wait
 
-
-class WriteMixin(ABC):
-    pass
+from Downloader import asy_launch
 
 
-class CreWriteMixin(WriteMixin):
+def output(message, code, form=0, end='\n'):
+    print(f'\033[{form};{code}m{message}\033[0m', end=end)
+
+
+class CreWriteMixin(ABC):
     def __init__(self, file_name, download_infos):
         self.download_infos = download_infos
         self.file_name = file_name
-        if not os.path.exists(f'./{file_name}'):
-            os.makedirs(f'./{file_name}')
-        if len(download_infos) > 0:
-            output(f'writing in:{self.file_name}: ', form=1, code=31, end='')
-            self.write_in()
-            output(f'[finish]', form=4, code=32)
 
     @abstractmethod
     def write_in(self):
@@ -90,5 +86,6 @@ class Zip:
         with zipfile.ZipFile(self.zip_path, 'w', zipfile.ZIP_DEFLATED) as _zip:
             for item in os.listdir(self.unzip_path):
                 _zip.write(self.unzip_path + os.sep + item)
+                output('#', code=33, form=4, end='')
         return self.unzip_path, _zip.namelist()
 

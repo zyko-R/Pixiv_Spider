@@ -19,18 +19,18 @@
 ![image.png](https://s2.loli.net/2023/01/07/k3KtSz1pENdDsBh.png)
   - 其余根据终端提示操作即可, 运行完毕后目录下会自动生成艺术作品集的zip文件
 ## 目录与文件说明
-- ### src / Process
-*存放了获取到artwork_id后的通用处理组件* 
-- Interface提供外部接口
-- Component.Parser组件活动于网络 负责解析网络请求和发起网络请求
-- Component.Pipline组件活动于本地 负责处理最终数据
-- ### src / Spider
-*存放了各种行为方式的爬虫*
-- SpecialType提供外部接口
-- Component.ExpectID 存放各种获取artwork_id的装饰器
-- Component.Prototype 存放了被装饰的通用爬虫
-- ### Src / Downloader
-*一切网络请求与响应都在这里准备与发生*
+- ### Util / Request
+*一切网络请求与响应都在这里准备与发生* 
+- Requester实现网络请求
+- Proxy实现其附加功能和接口(装饰器模式/代理模式)
+- ### src / Crawler
+*实现了各种行为方式的爬虫*
+- SemiCrawler/IDCaptor 实现捕获艺术作品ID的方案(装饰器模式)
+- SemiCrawler/HandlerCell 实现处理艺术作品ID的组件(模版方法模式)
+- SemiCrawler/IDHandler 组合HandlerCell内的组件为ID处理爬虫
+- CrawlerPlanner 组合IDHandler和IDCaptor为一系列的爬取指令，并提供执行接口(命令模式/生成器模式)
+- ### Client
+*负责调用CrawlerPlanner并提供菜单*
 ## To-do List:
 - [x] ***特定画师全画作下载***
 - [x] ***模拟登陆***
@@ -102,3 +102,9 @@
 - 2023-1-15 大幅度重构了项目
    - 统一Process策略模式为外观模式(嵌套职责链模式)
    - 统一插件与原型为装饰器模式-适配器模式
+- 2023-1-20 
+   - 处理者: 策略模式->模版方法模式
+   - 下载器: 空->装饰器模式联合代理模式 
+   - 爬虫: 工厂方法模式->生成器模式融合命令模式
+   - 重写菜单 添加指令集和延迟执行功能
+  

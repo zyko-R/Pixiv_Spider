@@ -6,92 +6,104 @@ import zipfile
 from abc import abstractmethod, ABC
 
 import aiofiles
-import aiofiles.os
 import imageio
 from lxml import etree
 
 from PixivCrawler.Util.Requests.Proxy import Download
-from PixivCrawler.Crawler.SemiCrawler.HandlerCell.Template import IFilter, IStore, IParse
 from PixivCrawler.Util.ThreadManager import ThreadLauncher, Thread, Async
 
 
-def colour_str(message, code, form=0):
-    return f'\033[{form};{code}m{message}\033[0m'
+class IFilterAPI(ABC):
+    def __init__(self, id_list, html_list):
+        self.id_list, self.html_list = id_list, html_list
 
-
-class IProcessIMP(ABC):
     @abstractmethod
-    def process(self):
+    def filter(self):
         pass
 
 
-class DoGroupID(IFilter):
-    def filter_ids(self):
-        nor_img, r18_img, nor_gif, r18_gif = [], [], [], []
+class IParseAPI(ABC):
+    def __init__(self, id_list):
+        self.id_list = id_list
 
-        def extract_tag_(_html, _id):
+    @abstractmethod
+    def parse(self):
+        pass
+
+
+class IStoreAPI(ABC):
+    def __init__(self, file_name, infos=(None,)):
+        self.infos, self.file_name = infos, file_name
+
+    @abstractmethod
+    def store(self):
+        pass
+
+
+class FilterForm(IFilterAPI):
+    def filter(self):
+        gif_ids, img_ids = {'ids': [], 'html': []}, {'ids': [], 'html': []}
+        for index in range(len(self.html_list)):
             try:
-                _gif_tag = etree.HTML(_html).xpath('//head/title/text()')[0]
-                _r18_tag = etree.HTML(_html).xpath('//head/meta[@property="twitter:title"]/@content')[0]
-                return _gif_tag, _r18_tag, _id
-            except(IndexError, AttributeError):
-                return '', '', ''
-
-        def package(_gif_tag, _r18_tag, _id):
-            if re.search(r'动图', _gif_tag):
-                r18_gif.append(_id) if re.search(r'\[R-18]', _r18_tag) else nor_gif.append(_id)
-            else:
-                r18_img.append(_id) if re.search(r'\[R-18]', _r18_tag) else nor_img.append(_id)
-
-        url_list = [f'https://www.pixiv.net/artworks/{_id}' for _id in self.id_list]
-        html_list = Download.response(url_list)['html']
-        for index in range(len(html_list)):
-            html, _id = html_list[index], self.id_list[index]
-            gif_tag, r18_tag, _id = extract_tag_(html, _id)
-            package(gif_tag, r18_tag, _id)
-        print()
-        print(colour_str(f'[NOR]: [IMG]{len(nor_img)}, [GIF]{len(nor_gif)}', form=0, code=32))
-        print(colour_str(f'[R18]: [IMG]{len(r18_img)}, [GIF]{len(r18_gif)}', form=0, code=32))
-        return nor_img, r18_img, nor_gif, r18_gif
+                tag = etree.HTML(self.html_list[index]).xpath('//head/title/text()')[0]
+                ids = gif_ids if re.search(r'动图', tag) else img_ids
+                ids['ids'].append(self.id_list[index])
+                ids['html'].append(self.html_list[index])
+            except AttributeError:
+                pass
+        return img_ids, gif_ids
 
 
-class DoParseIMG(IParse):
-    def parse_ids(self):
+class FilterType(IFilterAPI):
+    def filter(self):
+        nor_ids, r18_ids = {'ids': [], 'html': []}, {'ids': [], 'html': []}
+        for index in range(len(self.html_list)):
+            try:
+                tag = etree.HTML(self.html_list[index]).xpath('//head/meta[@property="twitter:title"]/@content')[0]
+                ids = r18_ids if re.search(r'\[R-18]', tag) else nor_ids
+                ids['ids'].append(self.id_list[index])
+                ids['html'].append(self.html_list[index])
+            except AttributeError:
+                pass
+        return nor_ids, r18_ids
+
+
+class ParseIMG(IParseAPI):
+    def parse(self):
         def yield_url(_url_list):
             resp_list = Download.response(_url_list)['json']
             for group, _src_url_html in enumerate(resp_list):
                 _src_url_list = re.findall(r'https://i\.pximg\.net/img-original/img/.*?_p\d+\..{3}', str(_src_url_html))
                 yield _src_url_list, self.id_list[group]
 
-        def yield_data(_source_url_list):
-            for _page, _img_url in enumerate(_source_url_list):
-                _suffix = _source_url_list[_page][-3:]
-                yield _suffix, _page
+        def yield_data(_id, _source_url_list):
+            _bina_list = Download.response(_source_url_list)['bina']
+            _name_list = [f'{_id}_p{_page}.{_source_url_list[_page][-3:]}'
+                          for _page, _img_url in enumerate(_source_url_list)]
+            yield _bina_list, _name_list
 
+        img_groups = []
         url_list = [f'https://www.pixiv.net/ajax/illust/{_id}/pages?lang=zh' for _id in self.id_list]
-        img_url_list, name_list = [], []
         for source_url_list, _id in yield_url(url_list):
-            for suffix, page in yield_data(source_url_list):
-                name_list.append(f'{_id}_p{page}.{suffix}')
-            img_url_list += source_url_list
-        img_bina_list = Download.response(img_url_list)['bina']
-        return img_bina_list, name_list
+            for bina_list, name_list in yield_data(_id, source_url_list):
+                img_groups.append((bina_list, name_list))
+        return img_groups
 
 
-class DoParseGIF(IParse):
-    def parse_ids(self):
+class ParseGIF(IParseAPI):
+    def parse(self):
         def yield_url(_url_list):
             url_data_list = Download.response(_url_list)['html']
             for group, url_data in enumerate(url_data_list):
                 url_data = json.loads(url_data)
                 try:
                     _zip_url = url_data["body"]["originalSrc"]
-                    _delay = [item["delay"] for item in url_data["body"]["frames"]]
-                    _delay = sum(_delay) / len(_delay) / 1000
-                    _id = self.id_list[group]
-                    yield [_zip_url], _delay, _id
                 except TypeError:
-                    pass
+                    continue
+                _delay = [item["delay"] for item in url_data["body"]["frames"]]
+                _delay = sum(_delay) / len(_delay) / 1000
+                _id = self.id_list[group]
+                yield [_zip_url], _delay, _id
 
         _url_list = [f'https://www.pixiv.net/ajax/illust/{_id}/ugoira_meta?lang=zh' for _id in self.id_list]
         gif_url_list, delay_list, name_list = [], [], []
@@ -104,17 +116,17 @@ class DoParseGIF(IParse):
         return gif_bina_list, delay_list, name_list
 
 
-class DoStoreIMG(IStore):
+class StoreIMG(IStoreAPI):
     def store(self):
         async def write_in(img_data, img_name):
             async with aiofiles.open(f'./{self.file_name}/{img_name}', 'wb+') as f:
                 await f.write(img_data)
 
-        img_bina_list, name_list = self.download_infos
-        ThreadLauncher(Async(write_in, (img_bina_list, name_list)))
+        for bina_list, name_list in self.infos:
+            ThreadLauncher(Async(write_in, (bina_list, name_list)))
 
 
-class DoStoreGIF(IStore):
+class StoreGIF(IStoreAPI):
     def store(self):
         def load_all_zip(_gif_bina_list, _gif_name_list):
             async def load_zip(_gif_bina, _gif_name):
@@ -147,7 +159,17 @@ class DoStoreGIF(IStore):
                 img_paths_list.append(img_paths)
             ThreadLauncher(Thread(merge_each, (file_path_list, img_paths_list, _delay_list)))
 
-        gif_bina_list, delay_list, gif_name_list = self.download_infos
+        gif_bina_list, delay_list, gif_name_list = self.infos
         load_all_zip(gif_bina_list, gif_name_list)
         flames_infos = unzip_all_img(gif_name_list)
         merge_all(flames_infos, delay_list)
+
+
+class ZIPFile(IStoreAPI):
+    def store(self):
+        src_dir = f'./{self.file_name}'
+        with zipfile.ZipFile('{src_dir}.zip', 'w', zipfile.ZIP_DEFLATED) as zipper:
+            for path, _, files in os.walk(src_dir):
+                for file in files:
+                    zipper.write(os.path.join(path, file), os.path.join(path.replace(src_dir, ''), file))
+        os.unlink(src_dir)

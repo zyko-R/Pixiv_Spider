@@ -1,4 +1,5 @@
 import asyncio
+import threading
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import nest_asyncio
@@ -11,9 +12,6 @@ class ThreadLauncher:
 
 
 class ThreadCompositor(ABC):
-    def __init__(self, method, params_list):
-        self.method, self.params_list = method, params_list
-
     @abstractmethod
     def launch(self):
         pass
@@ -28,6 +26,9 @@ class ThreadCompositor(ABC):
 
 
 class Thread(ThreadCompositor):
+    def __init__(self, method, params_list):
+        self.method, self.params_list = method, params_list
+
     def launch(self):
         task_params = self.unpacking(self.params_list)
         with ThreadPoolExecutor(max_workers=8) as pool:
@@ -38,7 +39,7 @@ class Thread(ThreadCompositor):
 
 class Async(ThreadCompositor):
     def __init__(self, method, params_list, call_back=None):
-        super().__init__(method, params_list)
+        self.method, self.params_list = method, params_list
         self.call_back = call_back
 
     def launch(self):
@@ -52,3 +53,22 @@ class Async(ThreadCompositor):
             loop.run_until_complete(asyncio.wait(task_list))
         except ValueError:
             pass
+
+
+class Wait(ThreadCompositor):
+    def __init__(self, task_list):
+        self.task_list = task_list
+
+    def launch(self):
+        for task in self.task_list:
+            if isinstance(task, threading.Thread):
+                task.start()
+        result = []
+        for task in self.task_list:
+            if isinstance(task, threading.Thread):
+                task.join()
+                result.append(task.result if hasattr(task, 'result')else None)
+        return result
+
+
+

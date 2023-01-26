@@ -1,7 +1,8 @@
-import asyncio
-import threading
+from PixivCrawler.Crawler.SemiCrawler.HandlerCell.HandlerType import *
+from PixivCrawler.Crawler.SemiCrawler.HandlerCell.HandlerAPI import *
 
-from ..SemiCrawler.HandlerCell.Implementer import *
+from PixivCrawler.Util.Requests.Proxy import Download
+from PixivCrawler.Util.ThreadManager import ThreadLauncher, Wait
 
 
 class ICrawler(ABC):
@@ -16,57 +17,37 @@ class IDHandler(ICrawler):
 
     def __new__(cls):
         if not hasattr(cls, '__unique_instance'):
-            orig = super(IDHandler, cls)
+            orig = super(ICrawler, cls)
             cls.__unique_instance = orig.__new__(cls)
         return cls.__unique_instance
 
     def crawl(self):
-        r18_file_name = f'[R18]{self.file_name}'
-        nor_file_name = f'[NOR]{self.file_name}'
-        nor_img, r18_img, nor_gif, r18_gif = DoGroupID(self.id_list).result
-        task_list = [
-            self.DownloadIMG(nor_file_name, nor_img),
-            self.DownloadIMG(r18_file_name, r18_img),
-            self.DownloadGIF(nor_file_name, nor_gif),
-            self.DownloadGIF(r18_file_name, r18_gif)
-        ]
-        for task in task_list:
-            task.start()
-        for task in task_list:
-            task.join()
-        self.end()
+        url_list = [f'https://www.pixiv.net/artworks/{_id}' for _id in self.id_list]
+        html_list = Download.response(url_list)['html']
+        img, gif = FilterForm(self.id_list, html_list).filter()
+        task_list = [Filter(FilterType(img['ids'], img['html'])), Filter(FilterType(gif['ids'], gif['html']))]
+        result = ThreadLauncher(Wait(task_list))
+        nor_img, r18_img = result[0] if isinstance(result[0], tuple) else (None, None)
+        nor_gif, r18_gif = result[1] if isinstance(result[1], tuple) else (None, None)
 
-    class Download(threading.Thread):
-        def __init__(self, file_name, id_list):
-            super().__init__()
-            self.file_name, self.id_list = file_name, id_list
+        ids = {'IMG': [], 'GIF': []}
+        for img_ids, gif_ids in zip([nor_img, r18_img], [nor_gif, r18_gif]):
+            if isinstance(img_ids, dict) and 'ids' in img_ids:
+                ids['IMG'].append(img_ids['ids'])
+            if isinstance(gif_ids, dict) and 'ids' in img_ids:
+                ids['GIF'].append(gif_ids['ids'])
 
-    class DownloadIMG(Download):
-        def run(self):
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            result = DoParseIMG(self.id_list).result
-            DoStoreIMG(result, self.file_name)
+        api = {'Parse': [ParseIMG, ParseGIF], 'Store': [StoreIMG, StoreGIF]}
+        for p_api, s_api, key in zip(api['Parse'], api['Store'], ids.keys()):
+            task_list = [Parse(p_api(param)) for param in ids[key]]
+            infos = ThreadLauncher(Wait(task_list))
+            task_list = [Store(s_api(f'{pre}{self.file_name}', infos))
+                         for pre, infos in zip(['[NOR]', '[R18]'], infos)]
+            ThreadLauncher(Wait(task_list))
 
-    class DownloadGIF(Download):
-        def run(self):
-            asyncio.set_event_loop(asyncio.new_event_loop())
-            result = DoParseGIF(self.id_list).result
-            DoStoreGIF(result, self.file_name)
+        task_list = [Store(ZIPFile(f'[NOR]{self.file_name}')), Store(ZIPFile(f'[R18]{self.file_name}'))]
+        ThreadLauncher(Wait(task_list))
 
-    def end(self):
-        def _zip(file_path):
-            print(colour_str(f'Zipping: ', form=1, code=31), end='')
-            with zipfile.ZipFile(file_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as z:
-                for item in os.listdir(file_path):
-                    z.write(file_path + os.sep + item)
-            print(colour_str(f'[finish]', form=1, code=32))
 
-        r18_file_name = f'[R18]{self.file_name}'
-        nor_file_name = f'[NOR]{self.file_name}'
 
-        if os.path.exists(f'./{r18_file_name}'):
-            _zip(f'./{r18_file_name}')
-            shutil.rmtree(f'./{r18_file_name}')
-        if os.path.exists(f'./{nor_file_name}'):
-            _zip(f'./{nor_file_name}')
-            shutil.rmtree(f'./{nor_file_name}')
+

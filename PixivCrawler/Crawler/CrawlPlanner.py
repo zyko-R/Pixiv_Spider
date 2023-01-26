@@ -1,32 +1,29 @@
-from .SemiCrawler.IDHandler import *
+from PixivCrawler.Crawler.SemiCrawler import IDHandler
+from PixivCrawler.Crawler.SemiCrawler import IDCaptor
 
 
-class ScheduledScheme:
-    @abstractmethod
-    def __init__(self, captor):
-        self.Scheme = captor
-
-    def enable(self):
-        return self.Scheme(IDHandler())
+class By:
+    AuthorID = IDCaptor.ByAuthorID
+    Artwork = IDCaptor.ByArtworkID
+    Sub = IDCaptor.BySub
+    Ranking = IDCaptor.ByRanking
 
 
 class CrawlPlanner:
     def __init__(self, executor):
         self.Executor = executor
 
-    def enable(self, schedule_scheme):
-        crawler = schedule_scheme.enable()
-        self.Executor.CrawlerList.append(crawler)
+    def enable(self, captor):
+        self.Executor.CrawlerList.append(captor(IDHandler.IDHandler()))
 
-    def regret(self):
+    def undo(self):
         if len(self.Executor.CrawlerList) != 0:
-            undo = self.Executor.CrawlerList[-1]
             self.Executor.CrawlerList.pop(-1)
-            return undo
 
 
 class Executor:
-    def __init__(self):
+    def __init__(self, source_limit):
+        IDCaptor.IDCaptor.source_limit = source_limit
         self.CrawlerList = []
 
     def action(self):

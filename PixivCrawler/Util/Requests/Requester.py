@@ -35,7 +35,7 @@ class Requester(IDownloader):
                         try:
                             resp_list[tag].append(await parse_list[tag]())
                         except (ContentTypeError, UnicodeDecodeError):
-                            pass
+                            resp_list[tag].append(None)
 
         ThreadLauncher(Async(download, (url_list,)))
         return resp_list

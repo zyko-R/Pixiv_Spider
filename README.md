@@ -26,9 +26,9 @@
 - ### src / Crawler
 *实现了各种行为方式的爬虫*
 - SemiCrawler/IDCaptor 实现捕获艺术作品ID的方案(装饰器模式)
-- SemiCrawler/HandlerCell 实现处理艺术作品ID的组件(模版方法模式)
+- SemiCrawler/HandlerCell 实现处理艺术作品ID的组件(侨接模式)
 - SemiCrawler/IDHandler 组合HandlerCell内的组件为ID处理爬虫
-- CrawlerPlanner 组合IDHandler和IDCaptor为一系列的爬取指令，并提供执行接口(命令模式/生成器模式)
+- CrawlerPlanner 组合IDHandler和IDCaptor为一系列的爬取指令，并提供执行接口(命令模式)
 - ### Client
 *负责调用CrawlerPlanner并提供菜单*
 ## To-do List:
@@ -103,8 +103,14 @@
    - 统一Process策略模式为外观模式(嵌套职责链模式)
    - 统一插件与原型为装饰器模式-适配器模式
 - 2023-1-20 
-   - 处理者: 策略模式->模版方法模式
-   - 下载器: 空->装饰器模式联合代理模式 
-   - 爬虫: 工厂方法模式->生成器模式融合命令模式
+   - HandleCell: 策略模式->模版方法模式
+   - Requester: 空->装饰器模式联合代理模式 
+   - CrawlPlanner: 工厂方法模式->生成器模式融合命令模式
    - 重写菜单 添加指令集和延迟执行功能
+- 2023-1-26
+   - HandleCell: (各)模版方法模式->(整合)桥接模式
+   - HandleCell/Filter: 模版方法模式->过滤器模式
+   - CrawlPlanner: 生成器模式融合命令模式->命令模式
+   - 重写IDHandler执行逻辑和播报内容
+   - 扩大错误处理范围
   

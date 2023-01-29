@@ -1,6 +1,4 @@
-from PixivCrawler.Client import Client
+from Client import Client
 
 client = Client()
 client.run()
-
-

@@ -8,7 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.service import Service
 
-from PixivCrawler.Util.Requests.Requester import Requester, IDownloader
+from PixivCrawler.Downloader.Lib.Request import Requester, IDownloader
 
 
 def colour_str(message, code, form=0):
@@ -37,7 +37,7 @@ class IDownloaderDecorator(IDownloader):
 
 
 class Login(IDownloaderDecorator):
-    res_path = os.path.normpath('PixivCrawler/Util/Requests/res')
+    res_path = os.path.normpath('PixivCrawler/Downloader/Lib')
     login_url, id_xpath, password_xpath, submit_xpath = \
         ('https://accounts.pixiv.net/login?return_to=https://www.pixiv.net',
          '//*[@class="sc-bn9ph6-1 hJBrSP"]/input[@autocomplete="username"]',

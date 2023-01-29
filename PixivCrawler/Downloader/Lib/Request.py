@@ -1,8 +1,7 @@
+import asyncio
 from abc import abstractmethod, ABC
 
 from aiohttp import ContentTypeError, TCPConnector, ClientSession
-
-from PixivCrawler.Util.ThreadManager import ThreadLauncher, Async
 
 
 def colour_str(message, code, form=0):
@@ -25,19 +24,24 @@ class Requester(IDownloader):
     }
 
     def request(self, url_list):
-        resp_list = {'html': [], 'bina': [], 'json': []}
+        resp_list = {'html': [], 'bytes': [], 'json': []}
 
         async def download(url):
             async with ClientSession(connector=TCPConnector(ssl=False)) as async_spider:
                 async with await async_spider.get(url=url, headers=self.headers) as resp:
-                    parse_list = {'html': resp.text, 'json': resp.json, 'bina': resp.read}
+                    parse_list = {'html': resp.text, 'json': resp.json, 'bytes': resp.read}
                     for tag in parse_list.keys():
                         try:
                             resp_list[tag].append(await parse_list[tag]())
                         except (ContentTypeError, UnicodeDecodeError):
                             resp_list[tag].append(None)
 
-        ThreadLauncher(Async(download, (url_list,)))
+        loop = asyncio.get_event_loop()
+        task_list = [loop.create_task(download(url)) for url in url_list]
+        try:
+            loop.run_until_complete(asyncio.wait(task_list))
+        except ValueError:
+            pass
         return resp_list
 
     def response(self, url_list):

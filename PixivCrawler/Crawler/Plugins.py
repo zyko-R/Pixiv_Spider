@@ -24,7 +24,7 @@ class IDPlugin(ICrawler):
         self.Handler.crawl(self.file_name, id_list)
 
     @abstractmethod
-    def decor(self) -> []: pass
+    def decor(self): pass
 
 
 class ByAuthorID(IDPlugin):

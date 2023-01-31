@@ -20,7 +20,7 @@ PluginsXProxy实现其附加功能和接口
 >Plugins 实现捕获艺术作品ID的方案  
 Prototype.IDHandler 通过访问Prototype.Lib内的组件以处理ID
 - ### PixivCrawler.CrawlerCaller
->*组合IDHandler和Plugin为系列指令，并提供执行接口*
+>*组合IDHandler和Plugin为系列指令，并提供执行接口与播报*
 - ### Client
 >*调用CrawlerCaller并提供菜单*
 
@@ -94,3 +94,7 @@ Prototype.IDHandler 通过访问Prototype.Lib内的组件以处理ID
    - HandleCell改名Lib: 桥接模式->策略模式
    - Lib.HandleAPI: (全重写)集合处理变更为多个子处理并行
    - 增加进度条
+- 2023-1-31:
+   - Prototype/Lib参数检查: 装饰器变更为策略模式+空对象模式
+   - 将Client类的装饰器转移至CrawlerCaller,并添加追加任务与启动任务时的播报
+   - 试图完全修复encoding error: 失败

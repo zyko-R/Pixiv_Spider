@@ -1,4 +1,5 @@
 import asyncio
+import re
 from abc import abstractmethod, ABC
 
 from aiohttp import ContentTypeError, TCPConnector, ClientSession
@@ -32,9 +33,13 @@ class Requester(IDownloader):
                     parse_list = {'html': resp.text, 'json': resp.json, 'bytes': resp.read}
                     for tag in parse_list.keys():
                         try:
-                            resp_list[tag].append(await parse_list[tag]())
+                            match tag:
+                                case 'html': r = re.sub('encoding=("gbk")', 'utf-8', str(await parse_list[tag]()))
+                                case _: r = await parse_list[tag]()
                         except (ContentTypeError, UnicodeDecodeError):
-                            resp_list[tag].append(None)
+                            r = None
+                        finally:
+                            resp_list[tag].append(r)
 
         loop = asyncio.get_event_loop()
         task_list = [loop.create_task(download(url)) for url in url_list]

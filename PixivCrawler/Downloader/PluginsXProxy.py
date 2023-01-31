@@ -11,7 +11,7 @@ from selenium.webdriver.edge.service import Service
 from PixivCrawler.Downloader.Lib.Request import Requester, IDownloader
 
 
-def colour_str(message, code, form=0):
+def colorstr(message, code, form=0):
     return f'\033[{form};{code}m{message}\033[0m'
 
 
@@ -51,7 +51,7 @@ class Login(IDownloaderDecorator):
         try:
             with open(os.path.normpath(f'{self.res_path}/id&password.json'), 'r+') as fr:
                 login_info = json.load(fr)
-        except BaseException:
+        except (TypeError, json.decoder.JSONDecodeError, FileNotFoundError):
             self.login_info_correct = False
         if not self.login_info_correct:
             login_info = {
@@ -78,17 +78,17 @@ class Login(IDownloaderDecorator):
             Requester.headers['cookie'] = cookie_str
             with session().get(headers=Requester.headers, url=self.login_url) as resp:
                 Login.login_success = True if resp.url != self.login_url else False
-        except (TypeError, json.decoder.JSONDecodeError):
+        except (TypeError, json.decoder.JSONDecodeError, FileNotFoundError):
             Login.login_success = False
 
     def decor(self):
         if self.login_success:
             return
-        print(colour_str('logining: ', code=31, form=1), end='')
+        print(colorstr('logining: ', code=31, form=1), end='')
         while True:
             self.__reload_cookie()
             if self.login_success:
                 break
             self.__simulated_login()
             self.login_info_correct = False
-        print(colour_str('Success', code=32, form=4))
+        print(colorstr('[Success]', code=32, form=1))

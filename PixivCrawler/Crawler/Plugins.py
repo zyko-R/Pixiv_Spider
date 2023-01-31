@@ -12,26 +12,25 @@ def colorstr(message, code, form=0):
 
 
 class IDPlugin(ICrawler):
-    src_limit = 0
+    src_limit, file_name = 0, 'NOTSET'
 
-    def __init__(self, handler: IDHandler, file_name: str):
-        self.Handler, self.file_name = handler, file_name
+    def __init__(self, handler: IDHandler): self.Handler = handler
 
     def crawl(self, file_name: None = None, id_list: None = None):
         id_list = self.decor()
-        print(colorstr(f'GettingID<{len(id_list)}>[Finish]', form=1, code=34))
         id_list = id_list[:len(id_list) if len(id_list) < self.src_limit else self.src_limit]
+        print(colorstr(f'GettingID<{len(id_list)}>[Finish]', form=1, code=34))
         self.Handler.crawl(self.file_name, id_list)
 
     @abstractmethod
-    def decor(self): pass
+    def decor(self) -> []: pass
 
 
 class ByAuthorID(IDPlugin):
     def __init__(self, handler: IDHandler):
         author_info = str(input(colorstr('Enter Author(ID/Name)>? ', form=1, code=31)))
-        author_name, self.author_id = Util.get_author_info(author_info)
-        super().__init__(handler, file_name=author_name)
+        self.file_name, self.author_id = Util.get_author_info(author_info)
+        super().__init__(handler)
 
     def decor(self):
         url = [f'https://www.pixiv.net/ajax/user/{self.author_id}/profile/all?lang=zh']
@@ -43,7 +42,8 @@ class ByAuthorID(IDPlugin):
 class ByArtworkID(IDPlugin):
     def __init__(self, handler: IDHandler):
         self.artwork_id = str(input(colorstr('Enter ArtworkID>? ', form=1, code=31)))
-        super().__init__(handler, file_name=self.artwork_id)
+        self.file_name = self.artwork_id
+        super().__init__(handler)
 
     def decor(self):
         url = [f'https://www.pixiv.net/ajax/illust/{self.artwork_id}/recommend/init?limit={self.src_limit * 2}&lang=zh']
@@ -54,7 +54,8 @@ class ByArtworkID(IDPlugin):
 
 class ByRanking(IDPlugin):
     def __init__(self, handler: IDHandler):
-        super().__init__(handler, file_name='Ranking')
+        super().__init__(handler)
+        self.file_name = 'Ranking'
 
     def decor(self):
         url_list = ['https://www.pixiv.net/ranking.php?mode=daily',
@@ -71,7 +72,8 @@ class ByRanking(IDPlugin):
 
 class ByFollowing(IDPlugin):
     def __init__(self, handler: IDHandler):
-        super().__init__(handler, file_name='Following')
+        super().__init__(handler)
+        self.file_name = 'Following'
 
     def decor(self):
         url_list = [f'https://www.pixiv.net/ajax/follow_latest/illust?p={page + 1}&mode=all&lang=zh'
@@ -90,8 +92,7 @@ class Util:
                 name_data = etree.HTML(html).xpath('//head/title/text()')[0]
                 author_name = re.findall('(.*?) - pixiv', name_data)[0]
             except (IndexError, AttributeError):
-                print(colorstr('Please enter correct AuthorID ', form=1, code=31))
-                exit()
+                exit('Please enter correct AuthorID')
             author_id = author_info
         else:
             try:
@@ -100,7 +101,6 @@ class Util:
                 id_data = etree.HTML(html).xpath('//h1/a[@target="_blank"][@class="title"]/@href')[0]
                 author_id = re.findall(r'\w+/(\d+)', id_data)[0]
             except (IndexError, AttributeError):
-                print(colorstr('Please enter correct AuthorName ', form=1, code=31))
-                exit()
+                exit('Please enter correct AuthorName')
             author_name = author_info
         return author_name, author_id

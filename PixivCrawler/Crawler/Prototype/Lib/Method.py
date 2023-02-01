@@ -9,11 +9,11 @@ from abc import abstractmethod, ABC
 import imageio
 from lxml import etree
 
-from PixivCrawler.Downloader.PluginsXProxy import Download
+from PixivCrawler.Downloader.Request import Request, Mode
 
 
-class PendingData:
-    def __init__(self, *args):  self.Method, self.MethodParam = self.method(), args
+class PendingMethod:
+    def __init__(self, *args): self.Method, self.MethodParam = self.method(), args
 
     @abstractmethod
     def method(self): return self.VoidMethod
@@ -35,13 +35,13 @@ class PendingData:
         def fn_ea(self, l1, l2): return [None]
 
 
-class FFilterForm(PendingData):
+class FFilterForm(PendingMethod):
     def method(self): return self.FilterForm
 
-    class FilterForm(PendingData.Method):
+    class FilterForm(PendingMethod.Method):
         def params(self, id_list):
             url_list = [f'https://www.pixiv.net/artworks/{_id}' for _id in id_list]
-            html_list = Download.response(url_list)['html']
+            html_list = Request(url_list, Mode.HTML)
             return id_list, html_list
 
         def fn_ea(self, _id, html):
@@ -56,20 +56,18 @@ class FFilterForm(PendingData):
             gif_ids, img_ids = [], []
             for tag, _id in zip(tag_list, id_list):
                 match tag:
-                    case 'IMG':
-                        img_ids.append(_id)
-                    case 'GIF':
-                        gif_ids.append(_id)
+                    case 'IMG': img_ids.append(_id)
+                    case 'GIF': gif_ids.append(_id)
             return img_ids, gif_ids
 
 
-class FFilterType(PendingData):
+class FFilterType(PendingMethod):
     def method(self): return self.FilterType
 
-    class FilterType(PendingData.Method):
+    class FilterType(PendingMethod.Method):
         def params(self, id_list):
             url_list = [f'https://www.pixiv.net/artworks/{_id}' for _id in id_list]
-            html_list = Download.response(url_list)['html']
+            html_list = Request(url_list, Mode.HTML)
             return id_list, html_list
 
         def fn_ea(self, _id, html):
@@ -84,45 +82,44 @@ class FFilterType(PendingData):
             nor_ids, r18_ids = [], []
             for tag, _id in zip(tag_list, id_list):
                 match tag:
-                    case 'NOR':
-                        nor_ids.append(_id)
-                    case 'R18':
-                        r18_ids.append(_id)
+                    case 'NOR': nor_ids.append(_id)
+                    case 'R18': r18_ids.append(_id)
             return nor_ids, r18_ids
 
 
-class FParseIMG(PendingData):
+class FParseIMG(PendingMethod):
     def method(self): return self.ParseIMG
 
-    class ParseIMG(PendingData.Method):
+    class ParseIMG(PendingMethod.Method):
         def params(self, id_list): return [id_list]
 
         def fn_ea(self, _id):
             asyncio.set_event_loop(asyncio.new_event_loop())
-            _json = Download.response([f'https://www.pixiv.net/ajax/illust/{_id}/pages?lang=zh'])['json'][0]
+            url = [f'https://www.pixiv.net/ajax/illust/{_id}/pages?lang=zh']
+            _json = Request(url, Mode.JSON)[0]
             src_urls = re.findall(r'https://i\.pximg\.net/img-original/img/.*?_p\d+\..{3}', str(_json))
-            _bytes_list = Download.response(src_urls)['bytes']
+            _bytes_list = Request(src_urls, Mode.BYTE)
             name_list = [f'{_id}_p{page}.{src_url[-3:]}' for page, src_url in enumerate(src_urls)]
             return _bytes_list, name_list
 
 
-class FParseGIF(PendingData):
+class FParseGIF(PendingMethod):
     def method(self): return self.ParseGIF
 
-    class ParseGIF(PendingData.Method):
-        def params(self, id_list):
-            return [id_list]
+    class ParseGIF(PendingMethod.Method):
+        def params(self, id_list): return [id_list]
 
         def fn_ea(self, _id):
             asyncio.set_event_loop(asyncio.new_event_loop())
-            html = Download.response([f'https://www.pixiv.net/ajax/illust/{_id}/ugoira_meta?lang=zh'])['html'][0]
-            url_data = json.loads(html)
+            url = [f'https://www.pixiv.net/ajax/illust/{_id}/ugoira_meta?lang=zh']
+            html = Request(url, Mode.HTML)[0]
+            pending_url = json.loads(html)
             try:
-                zip_url = url_data["body"]["originalSrc"]
+                zip_url = [pending_url["body"]["originalSrc"]]
             except TypeError:
                 return None, None, None
-            _bytes = Download.response([zip_url])['bytes'][0]
-            semi_delay = [item["delay"] for item in url_data["body"]["frames"]]
+            _bytes = Request(zip_url, Mode.BYTE)[0]
+            semi_delay = [item["delay"] for item in pending_url["body"]["frames"]]
             delay = sum(semi_delay) / len(semi_delay) / 1000
             return _bytes, delay, _id
 
@@ -131,10 +128,10 @@ class FParseGIF(PendingData):
             return [[e[i] for i in effective_index] for e in [bytes_list, delay_list, id_list]]
 
 
-class FStoreIMG(PendingData):
+class FStoreIMG(PendingMethod):
     def method(self): return self.StoreIMG
 
-    class StoreIMG(PendingData.Method):
+    class StoreIMG(PendingMethod.Method):
         file_name = None
 
         def params(self, file_name, bytes_list_list, name_list_list):
@@ -150,10 +147,10 @@ class FStoreIMG(PendingData):
                     f.write(_bytes)
 
 
-class FStoreGIF(PendingData):
+class FStoreGIF(PendingMethod):
     def method(self): return self.StoreGIF
 
-    class StoreGIF(PendingData.Method):
+    class StoreGIF(PendingMethod.Method):
         file_name = None
 
         def params(self, file_name, bytes_list, delay_list, name_list):

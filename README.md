@@ -10,12 +10,14 @@
 - 下载艺术作品以登陆为前提，首次使用时会要求输入账号&密码，直到正确为止
   - 以后登陆皆会调用文件里的账号密码，不会要求用户重新输入
   - 登陆信息有效期间不会进行模拟登陆，不必担心频繁登陆的问题
-![image.png](https://s2.loli.net/2023/01/29/yzWalwqZV1Hguct.png)
-  - 其余操作根据终端提示操作即可, 运行完毕后目录下会自动生成含艺术作品集的文件夹
+![image.png](IMG_IN_README/img.png)
+- 如模拟登陆失败，请前往PixivCrawler/Downloader/Request目录下  
+将auto_login改为**False**， 如下图所示:
+![image.png](IMG_IN_README/img_1.png)
 ## 目录与文件说明
 - ### Downloader
->Lib.Requester实现网络请求  
-PluginsXProxy实现其附加功能和接口
+>.Request实现网络请求  
+Lib.Plugins实现其附加功能
 - ### PixivCrawler.Crawler
 >Plugins 实现捕获艺术作品ID的方案  
 Prototype.IDHandler 通过访问Prototype.Lib内的组件以处理ID
@@ -98,3 +100,5 @@ Prototype.IDHandler 通过访问Prototype.Lib内的组件以处理ID
    - Prototype/Lib参数检查: 装饰器变更为策略模式+空对象模式
    - 将Client类的装饰器转移至CrawlerCaller,并添加追加任务与启动任务时的播报
    - 试图完全修复encoding error: 失败
+- 2023-2-1:
+   - 重构+稍微改良了下载器部分
